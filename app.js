@@ -127,14 +127,14 @@ async function start(){
     reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage});
     api.onValue(api.ref(db,'moderation'),snap=>{moderation=snap.val()||{};renderMessages();},()=>error('投稿の確認状態を読み込めませんでした。再読み込みしてください。'));
     api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{clockOffset=snap.val()||0;});
-    api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'つながっています':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
+    api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'オンライン中':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
     const failed=e=>{console.error('Tomori database:',e.code||e.message);ready=false;people={};messages=[];$('connection').textContent='接続できませんでした';error('接続できませんでした。時間をおいて再読み込みしてください。');render();renderMessages();};
     api.onValue(api.ref(db,'presence'),snap=>{people=snap.val()||{};render();renderMessages();},failed);
     let unsubscribe;
     function listen(){
       unsubscribe?.();
       const q=api.query(api.ref(db,'chat'),api.orderByChild('created'),api.startAt(Math.floor(now()/3600000)*3600000-82800000),api.limitToLast(100));
-      unsubscribe=api.onValue(q,snap=>{ready=true;$('connection').textContent=connected?'つながっています':'再接続を待っています';render();messages=[];snap.forEach(s=>{messages.push({...s.val(),id:s.key});});reactions.sync(messages);renderMessages();},failed);
+      unsubscribe=api.onValue(q,snap=>{ready=true;$('connection').textContent=connected?'オンライン中':'再接続を待っています';render();messages=[];snap.forEach(s=>{messages.push({...s.val(),id:s.key});});reactions.sync(messages);renderMessages();},failed);
     }
     listen();setInterval(()=>{if(!document.hidden){listen();render();}},60000);
     setInterval(()=>{if(!document.hidden)presence().catch(()=>{});render();renderMessages();},30000);
