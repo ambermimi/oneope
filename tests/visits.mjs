@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {visitDay} from '../docs/visits.js';
+assert.equal(visitDay(Date.parse('2026-11-02T23:59:59+09:00'))+1,visitDay(Date.parse('2026-11-03T00:00:00+09:00')));
+const ns='demo-tomori-default-rtdb';
+async function call(path,method,body,uid){const q=new URLSearchParams({ns});if(uid)q.set('auth_variable_override',JSON.stringify({uid,token:{sub:uid}}));return fetch('http://127.0.0.1:9000/'+path+'.json?'+q,{method,headers:{Authorization:'Bearer owner','Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});}
+assert.equal((await call('.settings/rules','PUT',JSON.parse(fs.readFileSync('firebase/database.rules.json')))).status,200);
+await call('','PUT',{});
+const day=visitDay(Date.now()),base='visitDays/'+day;
+const first={[base+'/members/a']:true,[base+'/count']:{'.sv':{increment:1}}};
+assert.equal((await call('','PATCH',first,'a')).status,200);
+assert.equal((await call('','PATCH',first,'a')).status,401,'revisit cannot inflate count');
+assert.equal((await call(base+'/count','PUT',99,'b')).status,401,'count alone denied');
+assert.equal((await call(base+'/members/b','PUT',true,'b')).status,401,'membership alone denied');
+assert.equal((await call('','PATCH',{[base+'/members/b']:true,[base+'/count']:{'.sv':{increment:1}}},'b')).status,200);
+assert.equal(await(await call(base+'/count','GET',undefined,'a')).json(),2);
+assert.equal((await call(base+'/members','GET',undefined,'a')).status,401,'visitor list private');
+assert.equal((await call(base+'/members/b','GET',undefined,'a')).status,401);
+assert.equal((await call(base+'/members/a','DELETE',undefined,'a')).status,401);
+assert.equal((await call('','PATCH',{['visitDays/'+(day-1)+'/members/c']:true,['visitDays/'+(day-1)+'/count']:1},'c')).status,401,'past day cannot be changed');
+console.log('PASS JST day boundary, unique daily count, coupled writes, private identities and immutable past counts');

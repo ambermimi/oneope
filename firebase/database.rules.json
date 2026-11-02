@@ -126,6 +126,25 @@
     "operatorAccess": {
       ".read": "auth != null && (root.child('operators').child(auth.uid).val() === true || (auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.email === root.child('operatorConfig').child('email').val()))",
       ".write": false
+    },
+    "visitorStatsStartedAt": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    "visitDays": {
+      "$day": {
+        "count": {
+          ".read": "auth != null",
+          ".write": "auth != null && $day === '' + ((now + 32400000 - (now + 32400000) % 86400000) / 86400000) && !data.parent().child('members').child(auth.uid).exists() && newData.parent().child('members').child(auth.uid).val() === true && newData.exists()",
+          ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+        },
+        "members": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && $day === '' + ((now + 32400000 - (now + 32400000) % 86400000) / 86400000) && !data.exists() && newData.val() === true && newData.parent().parent().child('count').val() === (data.parent().parent().child('count').exists() ? data.parent().parent().child('count').val() + 1 : 1)"
+          }
+        }
+      }
     }
   }
 }

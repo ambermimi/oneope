@@ -4,9 +4,9 @@ const HOUR=3600000;
 export function nightStart(time){
   const jst=new Date(time+9*HOUR);
   const hour=jst.getUTCHours();
-  if(hour>=5&&hour<22)return null;
+  if(hour>=5&&hour<21)return null;
   const midnight=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate())-9*HOUR;
-  return midnight+(hour<5?-2:22)*HOUR;
+  return midnight+(hour<5?-3:21)*HOUR;
 }
 export function botCount(time,humans){return nightStart(time)===null?0:humans>=5?2:1;}
 function hash(text){let n=0;for(const c of text)n=(n*31+c.codePointAt(0))>>>0;return n;}

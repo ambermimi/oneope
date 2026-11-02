@@ -1,10 +1,11 @@
+import {setupVisits} from './visits.js?v=20261102-visits1';
 import {languageProblem,isHidden} from './moderation.js?v=20261102-room5';
 import {spamProblem,nextGuard} from './spam.js?v=20261102-room5';
 import {setupMusic} from './music.js?v=20261102-room5';
 import {createReactions} from './reactions.js?v=20261102-room5';
 import {displayName,displayNameParts} from './names.js?v=20261102-animals1';
 import {setupComposer} from './composer.js?v=20261102-panel1';
-import {BOT_NAMES,botCount,botReplies} from './bots.js?v=20261102-room5';
+import {BOT_NAMES,botCount,botReplies} from './bots.js?v=20261102-21h';
 import {windows} from './scene.js?v=20261102-room5';
 import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
@@ -120,7 +121,7 @@ async function start(){
       import('https://www.gstatic.com/firebasejs/13.1.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.1.0/firebase-database.js')
     ]);
-    api=databaseApi;const app=initializeApp(firebaseConfig),auth=authApi.getAuth(app);
+    api=databaseApi;void setupVisits({initializeApp,authApi,api,config:firebaseConfig});const app=initializeApp(firebaseConfig),auth=authApi.getAuth(app);
     // Each tab has its own anonymous session, so closing one cannot remove another.
     await authApi.setPersistence(auth,authApi.inMemoryPersistence);
     uid=(await authApi.signInAnonymously(auth)).user.uid;db=api.getDatabase(app);myRef=api.ref(db,'presence/'+uid);ready=true;
