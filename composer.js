@@ -28,6 +28,10 @@ export function setupComposer(){
   form.addEventListener('focusout',()=>requestAnimationFrame(()=>{
     if(!form.contains(document.activeElement))reset();
   }));
+  form.addEventListener('message-sent',()=>{
+    document.activeElement?.blur();reset();
+    setTimeout(()=>document.querySelector('.chat').scrollIntoView({block:'start',behavior:'smooth'}),300);
+  });
   close.addEventListener('click',()=>{input.blur();close.blur();reset();});
   window.visualViewport?.addEventListener('resize',position);
   window.visualViewport?.addEventListener('scroll',position);

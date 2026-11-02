@@ -13,7 +13,7 @@ export function createReactions({api,db,uid,onChange,isConnected}){
   async function react(id,emoji){
     if(pending||!isConnected())return;
     pending=true;problem='';changed();
-    try{const ref=api.ref(db,'reactions/'+id+'/'+uid);if(values.get(id)?.[uid]===emoji)await api.remove(ref);else await api.set(ref,emoji);}
+    try{const ref=api.ref(db,'reactions/'+id+'/'+uid);if(values.get(id)?.[uid]===emoji)await api.remove(ref);else await api.set(ref,emoji);selected=null;}
     catch{problem='送れませんでした。接続を確認して、もう一度お試しください。';}
     finally{pending=false;changed();}
   }

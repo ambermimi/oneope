@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {spamProblem,nextGuard} from '../docs/spam.js';
+const now=100000,previous={lastAt:95000,lastBody:'こんにちは',windowStart:70000,count:2};
+assert.equal(spamProblem('ありがとう',previous,now),'');
+assert(spamProblem('こんにちは',previous,now));
+assert(spamProblem('ありがとう',{...previous,lastAt:99000},now));
+assert(spamProblem('ありがとう',{...previous,count:6},now));
+assert.equal(spamProblem('ありがとう',{...previous,count:6,windowStart:30000},now),'');
+assert(spamProblem('あ'.repeat(12),null,now));
+assert.equal(spamProblem('疲れたよ…少し休みたい',null,now),'');
+assert.equal(nextGuard(previous,'ありがとう','key',now,now).count,3);
+assert.equal(nextGuard({...previous,windowStart:30000},'ありがとう','key',now,now).count,1);
+console.log('Spam cooldown, duplicate, quota, reset and normal Japanese checks passed.');

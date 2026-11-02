@@ -25,7 +25,7 @@ Expected URL after successful deployment: https://ambermimi.github.io/oneope/nig
 
 - Each browser tab gets an anonymous identity; no name/email is required.
 - Only authenticated visitors can read chat and presence.
-- Messages are immutable, limited to 300 characters, and throttled to one write every three seconds per anonymous identity. Creating fresh identities can bypass this basic limit; it is not comprehensive spam prevention.
+- Messages are immutable, limited to 300 characters, and throttled to one write every three seconds and six writes per 60-second window per anonymous identity. Exact consecutive duplicates require 60 seconds. Atomic message/guard writes bind each quota use to one message ID; users cannot reset their guard. The page additionally rejects excessive repeated characters or three or more links. Creating fresh identities can bypass this basic limit; it is not comprehensive spam prevention.
 - The browser renders text as text, not HTML.
 - Presence uses server-side disconnect cleanup, a 30-second heartbeat, and a 90-second display timeout. Hidden tabs remove their presence.
 - Only the latest 100 messages from the last 23–24 hours appear (the cutoff advances hourly). Old records remain in Firebase until an administrator deletes them; this is not automatic data deletion. A scheduled trusted cleanup job can be added later.
@@ -54,4 +54,4 @@ The mobile composer uses 16px input text and visual viewport positioning to keep
 
 `node tests/bots.mjs` and `node tests/names.mjs` validate schedule boundaries, scaling, pacing, deterministic replies, and nickname generation.
 
-The sticky Amber mimi wordmark links to https://ambermimi.shop/ in a separate tab. Optional music-box audio is synthesized locally with an original melody and decaying bell partials. It never autoplays, stops when hidden, and uses no external audio assets. Sender/time metadata occupies a compact side column to preserve chat height.
+The sticky Amber mimi wordmark links to https://ambermimi.shop/ in a separate tab. Optional music-box audio is synthesized locally with an original melody and decaying bell partials. It never autoplays, stops when hidden, and uses no external audio assets. Sender appears before the message; timestamps appear on hover or keyboard focus without reserving vertical space. Names use 32 hiragana prefixes × 32 animals (1,024 combinations, not guaranteed unique). The anonymous greeting displays “だれかより”; authenticated sender IDs remain in backend message records for ownership and abuse controls, so this is display anonymity, not unlinkability.
