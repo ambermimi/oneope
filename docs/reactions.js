@@ -40,7 +40,7 @@ export function createReactions({api,db,uid,onChange,isConnected,onReport,autoLi
     }
     if(autoLike(message)){const item=document.createElement('span');item.className='reaction-total auto-like';item.textContent='👍';item.title='応援係（自動）のいいね';item.setAttribute('aria-label','応援係（自動）のいいね 1件');const mark=document.createElement('small');mark.textContent='自動';item.append(mark);summary.append(item);}
     const content=document.createElement('div');content.className='message-content'+(summary.childElementCount?' has-reactions':'');
-    content.append(el.querySelector('.message-select')||el.querySelector('p'),summary);el.append(content);
+    content.append(el.querySelector('.message-select')||el.querySelector('p'));el.append(content,summary);
     if(chosen&&other){
       const picker=document.createElement('div');picker.className='reaction-picker';picker.setAttribute('role','group');picker.setAttribute('aria-label','やさしいリアクションを選ぶ');
       for(const [emoji,label] of POSITIVE_REACTIONS){
