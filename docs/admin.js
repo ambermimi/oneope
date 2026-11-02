@@ -12,7 +12,7 @@ onAuthStateChanged(auth,async user=>{
  pending=null;$('confirm').close();$('admin').hidden=true;$('login').hidden=!!user;$('logout').hidden=!user;
  $('identity').textContent=user?user.email:'';
  if(!user){status('');return;}
- try{const allowed=(await get(ref(db,'operators/'+user.uid))).val()===true;
+ try{const allowed=(await get(ref(db,'operatorAccess'))).val()===true;
  if(auth.currentUser?.uid!==user.uid)return;
  $('admin').hidden=!allowed;status(allowed?'運営としてログインしています。':'このアカウントには運営権限がありません。');
  }catch{status('運営権限を確認できませんでした。');}
