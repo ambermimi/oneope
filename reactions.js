@@ -1,5 +1,5 @@
 export const POSITIVE_REACTIONS=[['🫶','応援してるよ'],['💛','共感したよ'],['🌷','おつかれさま'],['👏','がんばったね'],['✨','すてきだね'],['🥰','ありがとう']];
-export function createReactions({api,db,uid,onChange,isConnected,onReport}){
+export function createReactions({api,db,uid,onChange,isConnected,onReport,autoLike=()=>false}){
   const values=new Map(),subscriptions=new Map();let selected=null,pending=false,problem='',revision=0;
   const changed=()=>{revision++;onChange();};
   document.addEventListener('click',event=>{if(selected&&!event.target.closest('.bubble')){selected=null;changed();}});
@@ -38,6 +38,7 @@ export function createReactions({api,db,uid,onChange,isConnected,onReport}){
       if(other){item.type='button';item.dataset.focusKey=id+emoji+'-count';item.setAttribute('aria-pressed',String(reactions[uid]===emoji));item.disabled=pending||!isConnected();item.onclick=()=>{void react(id,emoji);};}
       summary.append(item);
     }
+    if(autoLike(message)){const item=document.createElement('span');item.className='reaction-total auto-like';item.textContent='👍';item.title='応援係（自動）のいいね';item.setAttribute('aria-label','応援係（自動）のいいね 1件');const mark=document.createElement('small');mark.textContent='自動';item.append(mark);summary.append(item);}
     const content=document.createElement('div');content.className='message-content'+(summary.childElementCount?' has-reactions':'');
     content.append(el.querySelector('.message-select')||el.querySelector('p'),summary);el.append(content);
     if(chosen&&other){

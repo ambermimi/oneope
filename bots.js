@@ -10,28 +10,30 @@ export function nightStart(time){
 }
 export function botCount(time,humans){return nightStart(time)===null?0:humans>=5?2:1;}
 function hash(text){let n=0;for(const c of text)n=(n*31+c.codePointAt(0))>>>0;return n;}
+const sensitive=body=>/死にたい|消えたい|自傷|傷つけそう|殴りそう/.test(body);
 export function encouragement(body,seed=0){
-  if(/死にたい|消えたい|自傷|傷つけそう|殴りそう/.test(body))return 'ひとりで抱えなくて大丈夫。今は身近な人に連絡して、そばにいてもらってね。危険が迫っているときは、地域の緊急窓口に助けを求めてください。';
-  if(/授乳|ミルク|おっぱい/.test(body))return ['🍼 夜のお世話、おつかれさま。あなたも、ひと息つけますように。','🌷 赤ちゃんのお世話をしているあなたにも、やさしい時間がありますように。'][seed%2];
-  if(/夜泣き|泣き止|泣いて|寝かしつけ|寝ない/.test(body))return ['🌙 長い夜のお世話、おつかれさま。全部うまくできなくても大丈夫。','🫶 少しでも肩の力を抜ける時間が、ありますように。'][seed%2];
-  if(/疲れ|疲れた|しんど|つら|辛|限界|不安|孤独|さみし|寂し/.test(body))return ['🫶 しんどい気持ち、ここに置いていってね。頼れる人に「手伝って」と伝えてもいいんだよ。','🌷 今夜は、できたことをひとつだけ。自分にもやさしくしてあげてね。'][seed%2];
-  if(/眠れ|寝れ/.test(body))return '☾ 眠れない夜もあるよね。ここで、少しひと息ついていってね。';
-  if(/おやすみ|寝ます|寝るね/.test(body))return '🌙 おやすみなさい。穏やかな時間になりますように。';
-  if(/ありがと|うれし|嬉し|できた|寝た/.test(body))return '🌷 🫶';
-  return ['🫶 今夜も、おつかれさま。返事はしなくて大丈夫だよ。','🌙 あなたにも、ほっとできる時間がありますように。','☾ 🫶'][seed%3];
+  if(sensitive(body))return 'ひとりで抱えず、今は身近な人に連絡してね 🫶';
+  if(/授乳|ミルク|おっぱい/.test(body))return ['授乳おつかれさま 🍼','水分もとってね 🫶'][seed%2];
+  if(/夜泣き|泣き止|泣いて|寝かしつけ|寝ない/.test(body))return ['大変だ〜、白目 🫠','寝かしつけ、おつかれさま 🌷'][seed%2];
+  if(/疲れ|しんど|つら|辛|限界|不安|孤独|さみし|寂し/.test(body))return ['ほんと、おつかれさま 🫶','無理しすぎないでね 🌷'][seed%2];
+  if(/眠れ|寝れ/.test(body))return 'なかなか眠れないよね 🌙';
+  if(/おやすみ|寝ます|寝るね/.test(body))return 'ゆっくり休んでね 🌙';
+  if(/ありがと|うれし|嬉し|できた|寝た/.test(body))return 'よかった〜 🥰';
+  return ['ぼちぼち頑張ろう 🫶','今日もおつかれさま 🌷','ひと息つこうね ☕'][seed%3];
+}
+function eligible(message,time){
+  const start=nightStart(time);
+  return start!==null&&!message.bot&&!message.anonymous&&typeof message.body==='string'&&typeof message.sender==='string'&&Number.isFinite(message.created)&&message.created>=start;
+}
+export function botLike(message,time){return eligible(message,time)&&!sensitive(message.body)&&message.created+180000<=time;}
+export function nextBotDelay(messages,time){
+  const future=messages.filter(m=>eligible(m,time)).flatMap(m=>[m.created+60000,...(sensitive(m.body)?[]:[m.created+180000])]).filter(t=>t>time);
+  return future.length?Math.min(...future)-time:null;
 }
 export function botReplies(messages,time,humans){
-  const count=botCount(time,humans),start=nightStart(time);
-  if(!count)return [];
-  const sorted=messages.filter(m=>typeof m.body==='string'&&typeof m.sender==='string'&&Number.isFinite(m.created)&&m.created>=start&&m.created+2500<=time)
-    .slice().sort((a,b)=>a.created-b.created||a.sender.localeCompare(b.sender)||a.body.localeCompare(b.body));
-  const result=[];let last=-Infinity;
-  for(const m of sorted){
-    // At most one reply per minute for the entire room; both bots share this limit.
-    if(m.created-last<60000)continue;
-    last=m.created;
-    const seed=hash(m.sender+m.created+m.body),bot=result.length%count;
-    result.push({sender:'bot:'+bot,bot:true,name:BOT_NAMES[bot],body:encouragement(m.body,seed),created:m.created+2500,replyTo:m.sender});
-  }
-  return result;
+  const count=botCount(time,humans);if(!count)return [];
+  return messages.filter(m=>eligible(m,time)&&m.created+60000<=time)
+    .slice().sort((a,b)=>a.created-b.created||a.sender.localeCompare(b.sender)||a.body.localeCompare(b.body))
+    .map(m=>{const seed=hash(m.sender+m.created+m.body),bot=seed%count;
+      return {sender:'bot:'+bot,bot:true,name:BOT_NAMES[bot],body:encouragement(m.body,seed),created:m.created+60000,replyTo:m.sender};});
 }

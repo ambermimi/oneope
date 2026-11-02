@@ -2,10 +2,10 @@ import {setupVisits} from './visits.js?v=20261102-visits1';
 import {languageProblem,isHidden} from './moderation.js?v=20261102-room5';
 import {spamProblem,nextGuard} from './spam.js?v=20261102-room5';
 import {setupMusic} from './music.js?v=20261102-room5';
-import {createReactions} from './reactions.js?v=20261102-room5';
+import {createReactions} from './reactions.js?v=20261102-delays1';
 import {displayName,displayNameParts} from './names.js?v=20261102-animals1';
 import {setupComposer} from './composer.js?v=20261102-panel1';
-import {BOT_NAMES,botCount,botReplies} from './bots.js?v=20261102-21h';
+import {BOT_NAMES,botCount,botReplies,botLike,nextBotDelay} from './bots.js?v=20261102-delays1';
 import {windows} from './scene.js?v=20261102-room5';
 import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
@@ -47,24 +47,27 @@ function render(){
     const offset=Math.min(others.length,OTHER_WINDOWS.length-count)+i;
     if(offset<OTHER_WINDOWS.length){const w=windows[OTHER_WINDOWS[offset]];w.classList.add('lit','bot-window');w.innerHTML='<span aria-hidden="true">✦</span>';w.setAttribute('aria-label',BOT_NAMES[i]+'（自動応援ボット）');w.onclick=()=>{$('silhouetteLabel').textContent=BOT_NAMES[i]+'（自動応援ボット）。夜に、そっと応援を届けます。';};}
   }
-  $('botStatus').textContent=count?'✦ 自動応援 '+count+'体 · '+BOT_NAMES.slice(0,count).join('・'):'';
-  if(count)$('live').textContent=list.length?'いま、'+list.length+'人のママが起きています（ボットを除く）':'今は、ほかの参加者はいません。自動応援がそばにいます。';
+  $('botStatus').textContent='';
   $('join').textContent=joined?'灯りを消して、おやすみ':'☾ 私も、起きてるよ';
   $('join').setAttribute('aria-pressed',String(joined));
   $('hint').textContent=joined?'あなたは「'+displayName(uid)+'」。ここで、ひと息。':'話さなくても、ここにいるだけで。';controls();
 }
-let lastMessageView='';
+let lastMessageView='',botTimer;
 function renderMessages(){
   const box=$('messages'),near=box.scrollHeight-box.scrollTop-box.clientHeight<65;
   const visibleMessages=messages.filter(m=>!isHidden(moderation[m.sender]));
   const replies=ready&&connected?botReplies(visibleMessages.filter(m=>!m.anonymous),now(),humanCount()):[];
   const recent=[...visibleMessages,...replies].filter(m=>m.created>now()-86400000).sort((a,b)=>a.created-b.created);
-  const signature=JSON.stringify([ready,connected,uid,recent,reactions?.revision]);
+  clearTimeout(botTimer);
+  const delay=ready&&connected?nextBotDelay(visibleMessages,now()):null;
+  if(delay!==null)botTimer=setTimeout(renderMessages,delay+20);
+  const likes=ready&&connected?visibleMessages.filter(m=>botLike(m,now())).map(m=>m.id):[];
+  const signature=JSON.stringify([ready,connected,uid,recent,likes,reactions?.revision]);
   if(signature===lastMessageView)return;
   const focusKey=document.activeElement?.dataset.focusKey,oldScroll=box.scrollTop;
   lastMessageView=signature;box.replaceChildren();
   if(!recent.length){const p=document.createElement('p');p.className='chat-empty';p.textContent=ready?'まだ、ひとことはありません。あなたの「起きてるよ」から、どうぞ。':'灯りをつなぐ準備をしています。';box.append(p);}
-  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?m.name+'（自動）':'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
+  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?'応援係（自動）':'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
   if(near)box.scrollTop=box.scrollHeight;else box.scrollTop=oldScroll;
   if(focusKey){const target=[...box.querySelectorAll('[data-focus-key]')].find(el=>el.dataset.focusKey===focusKey);target?.focus({preventScroll:true});}
 }
@@ -125,7 +128,7 @@ async function start(){
     // Each tab has its own anonymous session, so closing one cannot remove another.
     await authApi.setPersistence(auth,authApi.inMemoryPersistence);
     uid=(await authApi.signInAnonymously(auth)).user.uid;db=api.getDatabase(app);myRef=api.ref(db,'presence/'+uid);ready=true;
-    reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage});
+    reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage,autoLike:m=>ready&&connected&&botLike(m,now())});
     api.onValue(api.ref(db,'moderation'),snap=>{moderation=snap.val()||{};renderMessages();},()=>error('投稿の確認状態を読み込めませんでした。再読み込みしてください。'));
     api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{clockOffset=snap.val()||0;});
     api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'オンライン中':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
