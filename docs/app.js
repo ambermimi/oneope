@@ -46,7 +46,7 @@ function render(){
     const offset=Math.min(others.length,OTHER_WINDOWS.length-count)+i;
     if(offset<OTHER_WINDOWS.length){const w=windows[OTHER_WINDOWS[offset]];w.classList.add('lit','bot-window');w.innerHTML='<span aria-hidden="true">✦</span>';w.setAttribute('aria-label',BOT_NAMES[i]+'（自動応援ボット）');w.onclick=()=>{$('silhouetteLabel').textContent=BOT_NAMES[i]+'（自動応援ボット）。夜に、そっと応援を届けます。';};}
   }
-  $('botStatus').textContent=count?'✦ 自動応援 '+count+'体 · '+BOT_NAMES.slice(0,count).join('・'):'自動応援は毎晩22:00〜翌5:00（日本時間）';
+  $('botStatus').textContent=count?'✦ 自動応援 '+count+'体 · '+BOT_NAMES.slice(0,count).join('・'):'';
   if(count)$('live').textContent=list.length?'いま、'+list.length+'人のママが起きています（ボットを除く）':'今は、ほかの参加者はいません。自動応援がそばにいます。';
   $('join').textContent=joined?'灯りを消して、おやすみ':'☾ 私も、起きてるよ';
   $('join').setAttribute('aria-pressed',String(joined));
