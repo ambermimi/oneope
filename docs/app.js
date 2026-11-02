@@ -10,7 +10,7 @@ import {windows} from './scene.js?v=20261102-room5';
 import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
 const $=id=>document.getElementById(id);
-let joined=false,currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
+let currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
 let moderation={};
 let db,api,myRef,disconnectHook,reactions,clockOffset=0;
 const now=()=>Date.now()+clockOffset;
@@ -30,7 +30,7 @@ function render(){
   const own=windows[OWN_WINDOW];own.classList.add('reserved-window');
   const ownMarker=document.createElement('span');ownMarker.className='own-window-label';ownMarker.textContent='あなた';own.append(ownMarker);
   own.setAttribute('aria-label','あなたの窓（中央の建物・最上段の真ん中）');
-  own.onclick=()=>{$('silhouetteLabel').textContent='ここは、あなたの窓。「私も、起きてるよ」で灯りがともります。';};
+  own.onclick=()=>{$('silhouetteLabel').textContent='ここは、あなたの窓。この画面を開いている間、灯りがともります。';};
   function lightWindow(window,status,isYou=false){
     const pose=poseForStatus(status);
     window.querySelector('svg')?.remove();
@@ -40,7 +40,7 @@ function render(){
   }
   const others=list.filter(([id])=>id!==uid);
   others.slice(0,OTHER_WINDOWS.length-count).forEach(([,person],index)=>lightWindow(windows[OTHER_WINDOWS[index]],person.status));
-  if(joined&&ready&&connected&&list.some(([id])=>id===uid))lightWindow(own,currentStatus,true);
+  if(ready&&connected&&list.some(([id])=>id===uid))lightWindow(own,currentStatus,true);
   $('live').textContent=!ready?'今夜の灯りを、準備しています。':!connected?'接続を確認しています。':list.length?'いま、'+list.length+'人のママが起きています':'今は、まだほかの灯りがありません。';
   for(let i=0;i<count;i++){
     // Bots use stars rather than mother-and-baby silhouettes.
@@ -48,9 +48,9 @@ function render(){
     if(offset<OTHER_WINDOWS.length){const w=windows[OTHER_WINDOWS[offset]];w.classList.add('lit','bot-window');w.innerHTML='<span aria-hidden="true">✦</span>';w.setAttribute('aria-label',BOT_NAMES[i]+'（自動応援ボット）');w.onclick=()=>{$('silhouetteLabel').textContent=BOT_NAMES[i]+'（自動応援ボット）。夜に、そっと応援を届けます。';};}
   }
   $('botStatus').textContent='';
-  $('join').textContent=joined?'灯りを消して、おやすみ':'☾ 私も、起きてるよ';
-  $('join').setAttribute('aria-pressed',String(joined));
-  $('hint').textContent=joined?'あなたは「'+displayName(uid)+'」。ここで、ひと息。':'話さなくても、ここにいるだけで。';controls();
+  $('join').textContent='みんなのチャットをのぞく';
+  $('join').removeAttribute('aria-pressed');
+  $('hint').textContent='あなたは「'+displayName(uid)+'」。ここで、ひと息。';controls();
 }
 let lastMessageView='',botTimer;
 function renderMessages(){
@@ -73,10 +73,10 @@ function renderMessages(){
 }
 async function presence(){
   if(!connected||!ready)return;
-  if(joined&&!document.hidden){
+  if(!document.hidden){
     // Register server-side cleanup before announcing this session.
     disconnectHook=api.onDisconnect(myRef);await disconnectHook.remove();
-    if(joined&&!document.hidden)await api.set(myRef,{status:currentStatus,seen:api.serverTimestamp()});
+    if(!document.hidden)await api.set(myRef,{status:currentStatus,seen:api.serverTimestamp()});
   }else await api.remove(myRef);
 }
 async function reportMessage(message){
@@ -102,12 +102,12 @@ async function send(body,anonymous=false){
     if(!anonymous){$('chatText').value='';$('charCount').textContent='0 / 300';}
     $('chatForm').dispatchEvent(new Event('message-sent'));
     if(anonymous){$('toast').replaceChildren(document.createTextNode('匿名で「おつかれさま」を届けました。'),document.createElement('br'),document.createTextNode('おつかれさま。あなたも、今日一日よく頑張りました。'));}
-    else {joined=true;presence().catch(()=>error('メッセージは届きました。灯りの接続を確認しています。'));}
+    else {presence().catch(()=>error('メッセージは届きました。灯りの接続を確認しています。'));}
     $('messages').scrollTop=$('messages').scrollHeight;
   }catch{error('送信できませんでした。少し待って、接続を確認してからお試しください。');}
   finally{busy=false;render();}
 }
-$('join').onclick=async()=>{if(busy)return;busy=true;const previous=joined;joined=!joined;controls();try{await presence();error('');}catch{joined=previous;error('接続できませんでした。もう一度お試しください。');}finally{busy=false;render();}};
+$('join').onclick=()=>{document.querySelector('.chat').scrollIntoView({block:'start',behavior:'auto'});};
 document.querySelectorAll('.chip').forEach(b=>b.onclick=async()=>{currentStatus=b.textContent;document.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed',String(c===b)));await send(currentStatus);});
 $('chatForm').onsubmit=e=>{e.preventDefault();void send($('chatText').value);};
 $('chatText').oninput=e=>{$('charCount').textContent=e.target.value.length+' / 300';};
