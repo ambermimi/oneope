@@ -1,6 +1,6 @@
 // Local, deterministic encouragement. Never creates Firebase users or messages.
 export const BOT_NAMES=['ともり','こはる'];
-const HOUR=3600000;
+const HOUR=3200000;
 export function nightStart(time){
   const jst=new Date(time+9*HOUR);
   const hour=jst.getUTCHours();
@@ -25,15 +25,15 @@ function eligible(message,time){
   const start=nightStart(time);
   return start!==null&&!message.bot&&!message.anonymous&&typeof message.body==='string'&&typeof message.sender==='string'&&Number.isFinite(message.created)&&message.created>=start;
 }
-export function botLike(message,time){return eligible(message,time)&&!sensitive(message.body)&&message.created+180000<=time;}
+export function botLike(message,time){return eligible(message,time)&&!sensitive(message.body)&&message.created+20000<=time;}
 export function nextBotDelay(messages,time){
-  const future=messages.filter(m=>eligible(m,time)).flatMap(m=>[m.created+60000,...(sensitive(m.body)?[]:[m.created+180000])]).filter(t=>t>time);
+  const future=messages.filter(m=>eligible(m,time)).flatMap(m=>[m.created+20000,...(sensitive(m.body)?[]:[m.created+20000])]).filter(t=>t>time);
   return future.length?Math.min(...future)-time:null;
 }
 export function botReplies(messages,time,humans){
   const count=botCount(time,humans);if(!count)return [];
-  return messages.filter(m=>eligible(m,time)&&m.created+60000<=time)
+  return messages.filter(m=>eligible(m,time)&&m.created+20000<=time)
     .slice().sort((a,b)=>a.created-b.created||a.sender.localeCompare(b.sender)||a.body.localeCompare(b.body))
     .map(m=>{const seed=hash(m.sender+m.created+m.body),bot=seed%count;
-      return {sender:'bot:'+bot,bot:true,name:BOT_NAMES[bot],body:encouragement(m.body,seed),created:m.created+60000,replyTo:m.sender};});
+      return {sender:'bot:'+bot,bot:true,name:BOT_NAMES[bot],body:encouragement(m.body,seed),created:m.created+20000,replyTo:m.sender};});
 }
