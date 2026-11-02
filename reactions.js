@@ -36,7 +36,8 @@ export function createReactions({api,db,uid,onChange,isConnected}){
       if(other){item.type='button';item.dataset.focusKey=id+emoji+'-count';item.setAttribute('aria-pressed',String(reactions[uid]===emoji));item.disabled=pending||!isConnected();item.onclick=()=>{void react(id,emoji);};}
       summary.append(item);
     }
-    el.append(summary);
+    const content=document.createElement('div');content.className='message-content'+(summary.childElementCount?' has-reactions':'');
+    content.append(el.querySelector('.message-select')||el.querySelector('p'),summary);el.append(content);
     if(chosen&&other){
       const picker=document.createElement('div');picker.className='reaction-picker';picker.setAttribute('role','group');picker.setAttribute('aria-label','やさしいリアクションを選ぶ');
       for(const [emoji,label] of POSITIVE_REACTIONS){
