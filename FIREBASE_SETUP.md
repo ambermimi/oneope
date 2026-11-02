@@ -53,3 +53,5 @@ Positive reactions are stored at `reactions/{messageId}/{uid}`. Each reader can 
 The mobile composer uses 16px input text and visual viewport positioning to keep Send alongside the input when the keyboard opens. Enter adds a newline; Ctrl/Cmd+Enter sends outside Japanese IME composition.
 
 `node tests/bots.mjs` and `node tests/names.mjs` validate schedule boundaries, scaling, pacing, deterministic replies, and nickname generation.
+
+The sticky Amber mimi wordmark links to https://ambermimi.shop/ in a separate tab. Optional music-box audio is synthesized locally with an original melody and decaying bell partials. It never autoplays, stops when hidden, and uses no external audio assets. Sender/time metadata occupies a compact side column to preserve chat height.

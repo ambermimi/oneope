@@ -1,3 +1,4 @@
+import {setupMusic} from './music.js';
 import {createReactions} from './reactions.js';
 import {displayName} from './names.js';
 import {setupComposer} from './composer.js';
@@ -47,7 +48,7 @@ function renderMessages(){
   const focusKey=document.activeElement?.dataset.focusKey,oldScroll=box.scrollTop;
   lastMessageView=signature;box.replaceChildren();
   if(!recent.length){const p=document.createElement('p');p.className='chat-empty';p.textContent=ready?'まだ、ひとことはありません。あなたの「起きてるよ」から、どうぞ。':'灯りをつなぐ準備をしています。';box.append(p);}
-  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.textContent=(m.bot?m.name+'（自動応援）→ '+(m.replyTo===uid?'あなた':displayName(m.replyTo)):m.sender===uid?'あなた':displayName(m.sender))+' · '+new Date(m.created).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});const p=document.createElement('p');p.textContent=m.body;el.append(label,p);reactions?.decorate(el,m);box.append(el);});
+  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');name.textContent=m.bot?m.name+'（自動）':m.sender===uid?'あなた':displayName(m.sender);const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'});label.append(name,stamp);if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p);reactions?.decorate(el,m);box.append(el);});
   if(near)box.scrollTop=box.scrollHeight;else box.scrollTop=oldScroll;
   if(focusKey){const target=[...box.querySelectorAll('[data-focus-key]')].find(el=>el.dataset.focusKey===focusKey);target?.focus({preventScroll:true});}
 }
@@ -110,4 +111,5 @@ async function start(){
   }catch(e){console.error('Tomori connection:',e.code||e.message);$('connection').textContent='接続できませんでした';error('接続できませんでした。時間をおいて再読み込みしてください。');ready=false;render();}
 }
 setupComposer();
+setupMusic();
 void start();
