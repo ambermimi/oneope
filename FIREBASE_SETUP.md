@@ -40,6 +40,16 @@ Open http://localhost:4173/night/. Without Firebase configuration, the page clea
 
 ## Verification
 
-`TOMORI_TEST_PROJECT=tomori-oneope-20261102 node tests/backend.mjs` runs 12 live integration checks with disposable fixtures, then removes them. Requires Node.js 22+ and an authenticated Firebase CLI with project admin access. Syntax checks and live integration checks passed.
+`TOMORI_TEST_PROJECT=tomori-oneope-20261102 node tests/backend.mjs` runs 22 live integration checks with disposable fixtures, then removes them. Requires Node.js 22+ and an authenticated Firebase CLI with project admin access. Syntax checks and live integration checks passed.
 
 The active Pages configuration publishes the repository root. The static files are mirrored there from `docs/`; keep both copies in sync when editing.
+
+## Night helpers, nicknames, and reactions
+
+Night helpers run 22:00–05:00 Asia/Tokyo: one for 0–4 present people and two for 5+. They are labeled automatic helpers, excluded from human counts, and represented with stars. Preset encouragement is rendered locally from shared messages, at most once per minute, with a 2.5-second delay. It is not stored chat or an AI/medical service. There is no extra background server or billing. Hiragana animal names are deterministically derived from each anonymous session ID; names are not guaranteed unique.
+
+Positive reactions are stored at `reactions/{messageId}/{uid}`. Each reader can choose, change or remove one of six allowed emoji on someone else's recent message. Rules reject self-reactions, arbitrary text, negative emoji, missing-message targets and changes to someone else's reaction. Reactions are read only for loaded recent messages. Their stored retention follows the same administrator-managed policy as messages.
+
+The mobile composer uses 16px input text and visual viewport positioning to keep Send alongside the input when the keyboard opens. Enter adds a newline; Ctrl/Cmd+Enter sends outside Japanese IME composition.
+
+`node tests/bots.mjs` and `node tests/names.mjs` validate schedule boundaries, scaling, pacing, deterministic replies, and nickname generation.

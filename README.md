@@ -8,7 +8,7 @@ A quiet Japanese night room for mothers: glowing apartment windows, live presenc
 - `docs/`: matching source copy, also usable with Pages configured for `/docs`.
 - Firebase Anonymous Authentication and Realtime Database: live chat and disconnect-aware presence.
 - `firebase/database.rules.json`: deny-by-default access, owned presence, immutable messages, 300-character validation, and per-identity sending limits.
-- `tests/backend.mjs`: 12 integration checks with disposable fixtures.
+- `tests/backend.mjs`: 22 integration checks with disposable fixtures.
 
 The Firebase project `tomori-oneope-20261102` is configured and the rules are deployed. Paid billing is disabled. Only public Firebase browser configuration is included.
 
@@ -21,3 +21,5 @@ python3 -m http.server 4173 --directory docs
 ```
 
 Open http://localhost:4173/night/.
+
+Includes night-time automatic encouragement, hiragana animal nicknames, a mobile keyboard-aware composer, and positive-only shared emoji reactions.

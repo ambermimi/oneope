@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "node --check docs/app.js && node --check docs/scene.js",
-    "test:backend": "node tests/backend.mjs"
+    "check": "node --check docs/app.js && node --check docs/composer.js && node --check docs/reactions.js",
+    "test:backend": "node tests/backend.mjs",
+    "test": "node tests/bots.mjs && node tests/names.mjs"
   }
 }

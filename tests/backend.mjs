@@ -34,9 +34,20 @@ try{
  const p={['chat/'+bad]:{sender:b.localId,body:'first',created:timestamp},['limits/'+b.localId]:timestamp};
  check(await call('','PATCH',p,b.idToken),200,'second user can send');
  check(await call('','PATCH',{['chat/'+rateKey]:{sender:b.localId,body:'too fast',created:timestamp},['limits/'+b.localId]:timestamp},b.idToken),401,'rapid repeat message denied');
+
+ check(await call('reactions/'+key+'/'+b.localId,'PUT','🫶',b.idToken),200,'positive reaction accepted');
+ check(await call('reactions/'+key,'GET',undefined,a.idToken),200,'message author sees reactions');
+ check(await call('reactions/'+key+'/'+b.localId,'PUT','👎',b.idToken),401,'negative emoji denied');
+ check(await call('reactions/'+key+'/'+b.localId,'PUT','arbitrary text',b.idToken),401,'non-emoji reaction denied');
+ check(await call('reactions/'+key+'/'+b.localId,'PUT','💛',a.idToken),401,'another user cannot change reaction');
+ check(await call('reactions/'+key+'/'+a.localId,'PUT','💛',a.idToken),401,'self-reaction denied');
+ check(await call('reactions/missing-message/'+b.localId,'PUT','💛',b.idToken),401,'reaction to missing message denied');
+ check(await call('reactions/'+key+'/'+b.localId,'PUT','🌷',b.idToken),200,'own reaction can change');
+ check(await call('reactions/'+key+'/'+b.localId,'DELETE',undefined,b.idToken),200,'own reaction can be removed');
+ check(await call('reactions/'+key,'GET'),401,'unauthenticated reaction read denied');
  console.log(passed+' checks passed');
 }catch(e){console.error(e.message);process.exitCode=1;}finally{
- const cleanup=Object.fromEntries([...keys.map(k=>['chat/'+k,null]),...users.flatMap(u=>[['presence/'+u.localId,null],['limits/'+u.localId,null]])]);
+ const cleanup=Object.fromEntries([...keys.flatMap(k=>[['chat/'+k,null],['reactions/'+k,null]]),...users.flatMap(u=>[['presence/'+u.localId,null],['limits/'+u.localId,null]])]);
  execFileSync('firebase',['database:update','/','--data',JSON.stringify(cleanup),'--force','--project',config.projectId],{stdio:'pipe'});
  for(const u of users)await auth('delete',{idToken:u.idToken});
  console.log('Test messages, presence and anonymous test accounts removed.');
