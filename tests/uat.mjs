@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const {IS_UAT}=await import('../.uat-dist/environment.js');
+const {firebaseConfig}=await import('../.uat-dist/firebase-config.js');
+const {botCount,botReplies,BOT_NAMES}=await import('../.uat-dist/bots.js');
+assert.equal(IS_UAT,true);assert.equal(firebaseConfig.projectId,'okitell-uat-20261102');
+assert.match(firebaseConfig.databaseURL,/okitell-uat-20261102/);
+assert.equal(botCount(Date.parse('2026-11-02T12:00:00+09:00'),0),5);
+assert.equal(botReplies([],Date.now(),1).length,5);assert.equal(new Set(BOT_NAMES).size,5);
+assert(botReplies([],Date.now(),1).every(m=>m.bot&&m.sender.startsWith('bot:')));
+assert.match(await readFile('docs/environment.js','utf8'),/IS_UAT=false/);
+assert.match(await readFile('docs/firebase-config.js','utf8'),/tomori-oneope-20261102/);
+console.log('PASS UAT isolation, five synthetic bots in daytime, production-safe source defaults');

@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "tomori-oneope-20261102"
+    "default": "okitell-uat-20261102",
+    "uat": "okitell-uat-20261102",
+    "production": "tomori-oneope-20261102"
   }
 }

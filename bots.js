@@ -1,5 +1,8 @@
+import {IS_UAT} from './environment.js';
 // Local encouragement, varied by the random Firebase message ID and stable across redraws.
-export const BOT_NAMES=['ともり'];
+export const BOT_NAMES=IS_UAT?['すずめ','うさぎ','こねこ','りす','こぐま']:['ともり'];
+const previewStart=Date.now();
+const previewBodies=['授乳中のみんな、おつかれさま 🍼','なかなか寝ない夜もあるよね 🌙','ひと息ついて、水分もとってね ☕','ここでゆっくり過ごそうね 🌷','今日も十分頑張ってるよ 🫶'];
 const HOUR=3600000;
 export function nightStart(time){
   const jst=new Date(time+9*HOUR);
@@ -8,7 +11,7 @@ export function nightStart(time){
   const midnight=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate())-9*HOUR;
   return midnight+(hour<5?-3:21)*HOUR;
 }
-export function botCount(time){return nightStart(time)===null?0:1;}
+export function botCount(time){return IS_UAT?5:nightStart(time)===null?0:1;}
 function hash(text){let n=0;for(const c of text)n=(n*31+c.codePointAt(0))>>>0;return n;}
 const sensitive=body=>/死にたい|消えたい|自傷|傷つけそう|殴りそう/.test(body);
 export function encouragement(body,seed=0){
@@ -37,6 +40,7 @@ export function nextBotDelay(messages,time){
   return future.length?Math.min(...future)-time:null;
 }
 export function botReplies(messages,time,humans){
+  if(IS_UAT)return BOT_NAMES.map((name,i)=>({id:"uat-bot-"+i,sender:"bot:"+i,bot:true,name,body:previewBodies[i],created:previewStart-(5-i)*30000,replyTo:"uat-preview"}));
   const count=botCount(time,humans);if(!count)return [];
   return messages.filter(m=>eligible(m,time)&&m.created+20000<=time&&!conversationBusy(messages,m.created+20000))
     .slice().sort((a,b)=>a.created-b.created||a.sender.localeCompare(b.sender)||a.body.localeCompare(b.body))

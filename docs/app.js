@@ -1,3 +1,4 @@
+import {IS_UAT} from './environment.js';
 import {setupVisits} from './visits.js?v=20261102-visits1';
 import {languageProblem,isHidden} from './moderation.js?v=20261102-room5';
 import {spamProblem,nextGuard} from './spam.js?v=20261102-room5';
@@ -10,6 +11,7 @@ import {windows} from './scene.js?v=20261102-room5';
 import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
 const $=id=>document.getElementById(id);
+if(IS_UAT){const banner=document.createElement('div');banner.textContent='UAT・テスト環境｜5体のテストボット表示中';banner.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:9999;text-align:center;background:#623c16;color:#fff;font:12px/24px sans-serif;pointer-events:none';document.body.append(banner);document.title='[UAT] '+document.title;}
 let currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
 let moderation={};
 let db,api,myRef,disconnectHook,reactions,clockOffset=0;
@@ -67,7 +69,7 @@ function renderMessages(){
   const focusKey=document.activeElement?.dataset.focusKey,oldScroll=box.scrollTop;
   lastMessageView=signature;box.replaceChildren();
   if(!recent.length){const p=document.createElement('p');p.className='chat-empty';p.textContent=ready?'まだ、ひとことはありません。あなたの「起きてるよ」から、どうぞ。':'灯りをつなぐ準備をしています。';box.append(p);}
-  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?'応援係（自動）':'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
+  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?(IS_UAT?m.name+'（テストボット）':'応援係（自動）'):'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
   if(near)box.scrollTop=box.scrollHeight;else box.scrollTop=oldScroll;
   if(focusKey){const target=[...box.querySelectorAll('[data-focus-key]')].find(el=>el.dataset.focusKey===focusKey);target?.focus({preventScroll:true});}
 }
