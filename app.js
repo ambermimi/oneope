@@ -96,7 +96,7 @@ async function send(body,anonymous=false){
     await api.update(api.ref(db),{['chat/'+key]:{sender:uid,body:text,created:api.serverTimestamp(),...(anonymous?{anonymous:true}:{})},['limits/'+uid]:api.serverTimestamp(),['sendGuards/'+uid]:nextGuard(previous,text,key,now(),api.serverTimestamp())});
     if(!anonymous){$('chatText').value='';$('charCount').textContent='0 / 300';}
     $('chatForm').dispatchEvent(new Event('message-sent'));
-    if(anonymous)$('toast').textContent='匿名で「おつかれさま」を届けました。';
+    if(anonymous){$('toast').replaceChildren(document.createTextNode('匿名で「おつかれさま」を届けました。'),document.createElement('br'),document.createTextNode('おつかれさま。あなたも、今日一日よく頑張りました。'));}
     else {joined=true;presence().catch(()=>error('メッセージは届きました。灯りの接続を確認しています。'));}
     $('messages').scrollTop=$('messages').scrollHeight;
   }catch{error('送信できませんでした。少し待って、接続を確認してからお試しください。');}
