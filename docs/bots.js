@@ -1,6 +1,6 @@
 // Local, deterministic encouragement. Never creates Firebase users or messages.
 export const BOT_NAMES=['ともり','こはる'];
-const HOUR=3200000;
+const HOUR=3600000;
 export function nightStart(time){
   const jst=new Date(time+9*HOUR);
   const hour=jst.getUTCHours();
