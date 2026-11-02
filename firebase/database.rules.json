@@ -40,6 +40,9 @@
         },
         "anonymous": {
           ".validate": "newData.val() === true && newData.parent().child('body').val() === 'おつかれさま'"
+        },
+        "nickname": {
+          ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() < 1024 && newData.val() % 1 === 0 && !newData.parent().child(\"anonymous\").exists()"
         }
       }
     },
