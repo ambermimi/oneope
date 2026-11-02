@@ -1,4 +1,4 @@
-import SunCalc from './vendor/suncalc.js?v=20261102-room4';
+import SunCalc from './vendor/suncalc.js?v=20261102-room5';
 // Tokyo reference; date selection is explicitly JST, independent of device timezone.
 export function skyState(date=new Date()){
   const day=new Date(+date+9*3600000).toISOString().slice(0,10);

@@ -1,4 +1,4 @@
-import {setupSky} from './sky.js?v=20261102-room4';
+import {setupSky} from './sky.js?v=20261102-room5';
 const town=document.getElementById('town');
 const windows=[];
 [280,310,295,320,280].forEach(height=>{
