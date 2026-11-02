@@ -2,7 +2,7 @@
 export function setupComposer(){
   try{if(sessionStorage.getItem('tomori-has-posted'))document.body.classList.add('has-posted');}catch{}
   const chat=document.querySelector('.chat'),form=document.getElementById('chatForm');
-  const input=document.getElementById('chatText'),close=document.getElementById('closeComposer');
+  const input=document.getElementById('chatText');
   const messages=document.getElementById('messages'),header=document.querySelector('header');
   const mobile=matchMedia('(max-width:700px)');
   const holder=document.createElement('div');holder.className='chat-holder';chat.before(holder);holder.append(chat);
@@ -47,7 +47,6 @@ export function setupComposer(){
   document.getElementById('send').addEventListener('pointerdown',event=>{if(document.activeElement===input)event.preventDefault();});
   form.addEventListener('message-sent',()=>{document.body.classList.add('has-posted');try{sessionStorage.setItem('tomori-has-posted','1');}catch{}resizeInput();messages.scrollTop=messages.scrollHeight;if(editing)input.focus({preventScroll:true});layout();});
   input.addEventListener('blur',()=>requestAnimationFrame(()=>{if(!form.contains(document.activeElement))finishEditing();}));
-  close.addEventListener('click',()=>{input.blur();close.blur();finishEditing();});
   visualViewport?.addEventListener('resize',layout);visualViewport?.addEventListener('scroll',layout);
   window.addEventListener('resize',()=>{if(!mobile.matches)finishEditing();layout();});
   window.addEventListener('scroll',()=>{if(!editing)layout();},{passive:true});
