@@ -22,6 +22,7 @@ function controls(){
 }
 function humanCount(){return Object.values(people).filter(p=>p.seen>now()-90000).length;}
 function render(){
+  $('connection').classList.toggle('online',ready&&connected);
   windows.forEach(w=>{w.replaceChildren();w.classList.remove('lit','mine','bot-window');w.setAttribute('aria-label','おやすみ中の窓');w.onclick=()=>{$('silhouetteLabel').textContent='この窓の灯りは、おやすみ中。';};});
   const count=ready&&connected?botCount(now(),humanCount()):0;
   const list=Object.entries(people).filter(([,p])=>p.seen>now()-90000).sort(([a],[b])=>a===uid?-1:b===uid?1:0);
@@ -39,14 +40,14 @@ function render(){
   const others=list.filter(([id])=>id!==uid);
   others.slice(0,OTHER_WINDOWS.length-count).forEach(([,person],index)=>lightWindow(windows[OTHER_WINDOWS[index]],person.status));
   if(joined&&ready&&connected&&list.some(([id])=>id===uid))lightWindow(own,currentStatus,true);
-  $('live').textContent=!ready?'今夜の灯りを、準備しています。':!connected?'接続を確認しています。':list.length?'いま、'+list.length+'人がここにいます':'今は、まだほかの灯りがありません。';
+  $('live').textContent=!ready?'今夜の灯りを、準備しています。':!connected?'接続を確認しています。':list.length?'いま、'+list.length+'人のママが起きています':'今は、まだほかの灯りがありません。';
   for(let i=0;i<count;i++){
     // Bots use stars rather than mother-and-baby silhouettes.
     const offset=Math.min(others.length,OTHER_WINDOWS.length-count)+i;
     if(offset<OTHER_WINDOWS.length){const w=windows[OTHER_WINDOWS[offset]];w.classList.add('lit','bot-window');w.innerHTML='<span aria-hidden="true">✦</span>';w.setAttribute('aria-label',BOT_NAMES[i]+'（自動応援ボット）');w.onclick=()=>{$('silhouetteLabel').textContent=BOT_NAMES[i]+'（自動応援ボット）。夜に、そっと応援を届けます。';};}
   }
   $('botStatus').textContent=count?'✦ 自動応援 '+count+'体 · '+BOT_NAMES.slice(0,count).join('・'):'自動応援は毎晩22:00〜翌5:00（日本時間）';
-  if(count)$('live').textContent=list.length?'いま、'+list.length+'人がここにいます（ボットを除く）':'今は、ほかの参加者はいません。自動応援がそばにいます。';
+  if(count)$('live').textContent=list.length?'いま、'+list.length+'人のママが起きています（ボットを除く）':'今は、ほかの参加者はいません。自動応援がそばにいます。';
   $('join').textContent=joined?'灯りを消して、おやすみ':'☾ 私も、起きてるよ';
   $('join').setAttribute('aria-pressed',String(joined));
   $('hint').textContent=joined?'あなたは「'+displayName(uid)+'」。ここで、ひと息。':'話さなくても、ここにいるだけで。';controls();
@@ -126,14 +127,14 @@ async function start(){
     reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage});
     api.onValue(api.ref(db,'moderation'),snap=>{moderation=snap.val()||{};renderMessages();},()=>error('投稿の確認状態を読み込めませんでした。再読み込みしてください。'));
     api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{clockOffset=snap.val()||0;});
-    api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'● つながっています':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
+    api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'つながっています':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
     const failed=e=>{console.error('Tomori database:',e.code||e.message);ready=false;people={};messages=[];$('connection').textContent='接続できませんでした';error('接続できませんでした。時間をおいて再読み込みしてください。');render();renderMessages();};
     api.onValue(api.ref(db,'presence'),snap=>{people=snap.val()||{};render();renderMessages();},failed);
     let unsubscribe;
     function listen(){
       unsubscribe?.();
       const q=api.query(api.ref(db,'chat'),api.orderByChild('created'),api.startAt(Math.floor(now()/3600000)*3600000-82800000),api.limitToLast(100));
-      unsubscribe=api.onValue(q,snap=>{ready=true;$('connection').textContent=connected?'● つながっています':'再接続を待っています';render();messages=[];snap.forEach(s=>{messages.push({...s.val(),id:s.key});});reactions.sync(messages);renderMessages();},failed);
+      unsubscribe=api.onValue(q,snap=>{ready=true;$('connection').textContent=connected?'つながっています':'再接続を待っています';render();messages=[];snap.forEach(s=>{messages.push({...s.val(),id:s.key});});reactions.sync(messages);renderMessages();},failed);
     }
     listen();setInterval(()=>{if(!document.hidden){listen();render();}},60000);
     setInterval(()=>{if(!document.hidden)presence().catch(()=>{});render();renderMessages();},30000);
