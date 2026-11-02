@@ -1,3 +1,4 @@
+import {setupSky} from './sky.js?v=20261102-room4';
 const town=document.getElementById('town');
 const windows=[];
 [280,310,295,320,280].forEach(height=>{
@@ -7,6 +8,5 @@ const windows=[];
   }
   town.append(house);
 });
-const scene=document.querySelector('.scene');
-for(let i=0;i<28;i++){const star=document.createElement('i');star.className='star';star.setAttribute('aria-hidden','true');star.style.left=((i*37)%98)+'%';star.style.top=((i*23)%48)+'%';scene.append(star);}
+setupSky();
 export {windows};

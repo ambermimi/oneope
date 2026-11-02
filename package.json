@@ -6,6 +6,6 @@
   "scripts": {
     "check": "node --check docs/app.js && node --check docs/composer.js && node --check docs/reactions.js",
     "test:backend": "node tests/backend.mjs",
-    "test": "node tests/bots.mjs && node tests/names.mjs && node tests/scene.mjs && node tests/spam.mjs"
+    "test": "node tests/bots.mjs && node tests/names.mjs && node tests/scene.mjs && node tests/spam.mjs && node tests/moderation.mjs && node tests/sky.mjs"
   }
 }

@@ -25,7 +25,7 @@ Expected URL after successful deployment: https://ambermimi.github.io/oneope/nig
 
 - Each browser tab gets an anonymous identity; no name/email is required.
 - Only authenticated visitors can read chat and presence.
-- Messages are immutable, limited to 300 characters, and throttled to one write every three seconds and six writes per 60-second window per anonymous identity. Exact consecutive duplicates require 60 seconds. Atomic message/guard writes bind each quota use to one message ID; users cannot reset their guard. The page additionally rejects excessive repeated characters or three or more links. Creating fresh identities can bypass this basic limit; it is not comprehensive spam prevention.
+- Messages are immutable, limited to 300 characters, and throttled to one write every second and twelve writes per 60-second window per anonymous identity. Exact consecutive duplicates require 15 seconds. Atomic message/guard writes bind each quota use to one message ID; users cannot reset their guard. The page additionally rejects excessive repeated characters or three or more links. Creating fresh identities can bypass this basic limit; it is not comprehensive spam prevention.
 - The browser renders text as text, not HTML.
 - Presence uses server-side disconnect cleanup, a 30-second heartbeat, and a 90-second display timeout. Hidden tabs remove their presence.
 - Only the latest 100 messages from the last 23–24 hours appear (the cutoff advances hourly). Old records remain in Firebase until an administrator deletes them; this is not automatic data deletion. A scheduled trusted cleanup job can be added later.
@@ -55,3 +55,17 @@ The mobile composer uses 16px input text and visual viewport positioning to keep
 `node tests/bots.mjs` and `node tests/names.mjs` validate schedule boundaries, scaling, pacing, deterministic replies, and nickname generation.
 
 The sticky Amber mimi wordmark links to https://ambermimi.shop/ in a separate tab. Optional music-box audio is synthesized locally with an original melody and decaying bell partials. It never autoplays, stops when hidden, and uses no external audio assets. Sender appears before the message; timestamps appear on hover or keyboard focus without reserving vertical space. Names use 32 hiragana prefixes × 32 animals (1,024 combinations, not guaranteed unique). The anonymous greeting displays “だれかより”; authenticated sender IDs remain in backend message records for ownership and abuse controls, so this is display anonymity, not unlinkability.
+
+
+## Reports and manual review
+
+The message reaction menu includes 報告. Reports are accepted only from an authenticated account other than the message sender, for an existing message less than a day old. One report per sender/reporting account is allowed; report creation and counter increment are atomic and validated together. Three distinct anonymous accounts trigger room-wide display suppression for that sender and block further posts. Existing records remain available to administrators for review; this is not data deletion or a confidentiality boundary. Anonymous accounts do not establish distinct human identity, so determined account recreation can circumvent anti-abuse controls.
+
+In the Firebase Realtime Database console for `tomori-oneope-20261102`, inspect `moderation/{senderUid}/count`, then `reports/{senderUid}`. Each report contains a `messageId` pointing to `chat/{messageId}` and its creation time. Reporter records are private to the reporter and administrators. Set `moderation/{senderUid}/status` to `visible` to restore messages and posting after review, or `hidden` to keep both suppressed. Only project administrators can set status; ordinary clients cannot. A `visible` decision overrides the automatic threshold until an administrator changes it. Do not delete reports simply to restore an account; preserve the review evidence. No automatic moderator notification is configured.
+
+The Japanese wording filter rejects a short, explicit list of insults/threats on the page and server. Expressions of distress remain allowed. This is a basic keyword safeguard, not contextual moderation.
+
+
+## Sky illustration and sunrise
+
+The original SVG sky depicts schematic Cassiopeia and Orion figures inspired by constellations visible from Japan; it is not a live directional chart. References: https://www.nao.ac.jp/astro/sky/2026/11.html and https://www.iau.org/IAU/Astronomy-FAQs/Constellations.aspx . Sunrise and sunset are calculated locally with vendored SunCalc 1.9.0 (license included), at Tokyo coordinates 35.6762, 139.6503. The date is selected in JST, independent of device timezone. Dawn blends from 45 minutes before sunrise through 30 minutes after it; stars fade and evening restores the night palette. The page updates once per minute and on return from the background. No location permission or location API request is used.

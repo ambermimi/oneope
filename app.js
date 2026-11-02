@@ -1,14 +1,16 @@
-import {spamProblem,nextGuard} from './spam.js';
-import {setupMusic} from './music.js';
-import {createReactions} from './reactions.js';
-import {displayName,displayNameParts} from './names.js';
-import {setupComposer} from './composer.js';
-import {BOT_NAMES,botCount,botReplies} from './bots.js';
-import {windows} from './scene.js';
-import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js';
-import {firebaseConfig} from './firebase-config.js';
+import {languageProblem,isHidden} from './moderation.js?v=20261102-room4';
+import {spamProblem,nextGuard} from './spam.js?v=20261102-room4';
+import {setupMusic} from './music.js?v=20261102-room4';
+import {createReactions} from './reactions.js?v=20261102-room4';
+import {displayName,displayNameParts} from './names.js?v=20261102-room4';
+import {setupComposer} from './composer.js?v=20261102-room4';
+import {BOT_NAMES,botCount,botReplies} from './bots.js?v=20261102-room4';
+import {windows} from './scene.js?v=20261102-room4';
+import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-room4';
+import {firebaseConfig} from './firebase-config.js?v=20261102-room4';
 const $=id=>document.getElementById(id);
 let joined=false,currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
+let moderation={};
 let db,api,myRef,disconnectHook,reactions,clockOffset=0;
 const now=()=>Date.now()+clockOffset;
 function error(text){$('chatError').textContent=text;}
@@ -24,11 +26,13 @@ function render(){
   const count=ready&&connected?botCount(now(),humanCount()):0;
   const list=Object.entries(people).filter(([,p])=>p.seen>now()-90000).sort(([a],[b])=>a===uid?-1:b===uid?1:0);
   const own=windows[OWN_WINDOW];own.classList.add('reserved-window');
+  const ownMarker=document.createElement('span');ownMarker.className='own-window-label';ownMarker.textContent='あなた';own.append(ownMarker);
   own.setAttribute('aria-label','あなたの窓（中央の建物・最上段の真ん中）');
   own.onclick=()=>{$('silhouetteLabel').textContent='ここは、あなたの窓。「私も、起きてるよ」で灯りがともります。';};
   function lightWindow(window,status,isYou=false){
     const pose=poseForStatus(status);
-    window.innerHTML='<svg viewBox="0 0 44 56" preserveAspectRatio="xMidYMax meet" aria-hidden="true">'+pose.svg+'</svg>';
+    window.querySelector('svg')?.remove();
+    window.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 44 56" preserveAspectRatio="xMidYMax meet" aria-hidden="true">'+pose.svg+'</svg>');
     window.classList.add(isYou?'mine':'lit');window.setAttribute('aria-label',(isYou?'あなたの窓：':'')+status+' — '+pose.label);
     window.onclick=()=>{$('silhouetteLabel').textContent=(isYou?'あなたの窓：':'')+status+'。'+pose.label+'姿を表すイラストです。';};
   }
@@ -50,8 +54,9 @@ function render(){
 let lastMessageView='';
 function renderMessages(){
   const box=$('messages'),near=box.scrollHeight-box.scrollTop-box.clientHeight<65;
-  const replies=ready&&connected?botReplies(messages.filter(m=>!m.anonymous),now(),humanCount()):[];
-  const recent=[...messages,...replies].filter(m=>m.created>now()-86400000).sort((a,b)=>a.created-b.created);
+  const visibleMessages=messages.filter(m=>!isHidden(moderation[m.sender]));
+  const replies=ready&&connected?botReplies(visibleMessages.filter(m=>!m.anonymous),now(),humanCount()):[];
+  const recent=[...visibleMessages,...replies].filter(m=>m.created>now()-86400000).sort((a,b)=>a.created-b.created);
   const signature=JSON.stringify([ready,connected,uid,recent,reactions?.revision]);
   if(signature===lastMessageView)return;
   const focusKey=document.activeElement?.dataset.focusKey,oldScroll=box.scrollTop;
@@ -69,8 +74,20 @@ async function presence(){
     if(joined&&!document.hidden)await api.set(myRef,{status:currentStatus,seen:api.serverTimestamp()});
   }else await api.remove(myRef);
 }
+async function reportMessage(message){
+  if(!ready||!connected||message.sender===uid)return;
+  if(!window.confirm('この投稿を不適切な内容として報告しますか？ 同じ相手への報告は1回だけです。'))return;
+  try{
+    const path='reports/'+message.sender+'/'+uid;
+    if((await api.get(api.ref(db,path))).exists()){error('この相手はすでに報告済みです。');return;}
+    await api.update(api.ref(db),{[path]:{messageId:message.id,created:api.serverTimestamp()},['moderation/'+message.sender+'/count']:api.increment(1)});
+    error('報告を受け付けました。ご協力ありがとうございます。');
+  }catch{error('報告できませんでした。接続を確認して、もう一度お試しください。');}
+}
 async function send(body,anonymous=false){
   const text=body.trim();if(!text||text.length>300||busy||!connected||!ready)return;
+  const wording=languageProblem(text);if(wording){error(wording);return;}
+  if(isHidden(moderation[uid])){error('投稿は確認待ちです。管理者の確認までお待ちください。');return;}
   busy=true;controls();error('');
   try{
     const previous=(await api.get(api.ref(db,'sendGuards/'+uid))).val();
@@ -80,7 +97,7 @@ async function send(body,anonymous=false){
     if(!anonymous){$('chatText').value='';$('charCount').textContent='0 / 300';}
     $('chatForm').dispatchEvent(new Event('message-sent'));
     if(anonymous)$('toast').textContent='匿名で「おつかれさま」を届けました。';
-    else {joined=true;await presence();}
+    else {joined=true;presence().catch(()=>error('メッセージは届きました。灯りの接続を確認しています。'));}
     $('messages').scrollTop=$('messages').scrollHeight;
   }catch{error('送信できませんでした。少し待って、接続を確認してからお試しください。');}
   finally{busy=false;render();}
@@ -106,7 +123,8 @@ async function start(){
     // Each tab has its own anonymous session, so closing one cannot remove another.
     await authApi.setPersistence(auth,authApi.inMemoryPersistence);
     uid=(await authApi.signInAnonymously(auth)).user.uid;db=api.getDatabase(app);myRef=api.ref(db,'presence/'+uid);ready=true;
-    reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected});
+    reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage});
+    api.onValue(api.ref(db,'moderation'),snap=>{moderation=snap.val()||{};renderMessages();},()=>error('投稿の確認状態を読み込めませんでした。再読み込みしてください。'));
     api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{clockOffset=snap.val()||0;});
     api.onValue(api.ref(db,'.info/connected'),snap=>{connected=snap.val()===true;$('connection').textContent=connected?'● つながっています':'再接続を待っています';render();if(connected)presence().catch(()=>error('灯りの接続を確認してください。'));});
     const failed=e=>{console.error('Tomori database:',e.code||e.message);ready=false;people={};messages=[];$('connection').textContent='接続できませんでした';error('接続できませんでした。時間をおいて再読み込みしてください。');render();renderMessages();};

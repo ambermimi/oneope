@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {skyState} from '../docs/sky.js';
+const night=skyState(new Date('2026-11-02T00:00:00+09:00'));
+const dawn=skyState(new Date('2026-11-02T06:00:00+09:00'));
+const day=skyState(new Date('2026-11-02T12:00:00+09:00'));
+assert.equal(night.stars,1);assert.equal(night.daylight,0);
+assert(dawn.glow>.8&&dawn.daylight>0&&dawn.daylight<1);
+assert.equal(day.daylight,1);assert.equal(day.stars,0);
+assert.equal(skyState(new Date('2026-11-01T16:00:00Z')).sunrise.toISOString().slice(0,10),'2026-11-01');
+const summer=skyState(new Date('2026-06-21T12:00:00+09:00'));
+assert.notEqual(summer.sunrise.getUTCHours(),day.sunrise.getUTCHours());
+console.log('Tokyo date boundary, night, dawn, daylight and seasonal sunrise verified.');

@@ -24,13 +24,13 @@
         "created"
       ],
       "$message": {
-        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('sender').val() === auth.uid && (!root.child('limits').child(auth.uid).exists() || root.child('limits').child(auth.uid).val() <= now - 3000) && newData.parent().parent().child('limits').child(auth.uid).val() === now && newData.parent().parent().child('sendGuards').child(auth.uid).child('messageId').val() === $message && newData.parent().parent().child('sendGuards').child(auth.uid).child('lastAt').val() === now && newData.parent().parent().child('sendGuards').child(auth.uid).child('lastBody').val() === newData.child('body').val()",
+        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('sender').val() === auth.uid && (!root.child('limits').child(auth.uid).exists() || root.child('limits').child(auth.uid).val() <= now - 1000) && newData.parent().parent().child('limits').child(auth.uid).val() === now && newData.parent().parent().child('sendGuards').child(auth.uid).child('messageId').val() === $message && newData.parent().parent().child('sendGuards').child(auth.uid).child('lastAt').val() === now && newData.parent().parent().child('sendGuards').child(auth.uid).child('lastBody').val() === newData.child('body').val() && root.child('moderation').child(auth.uid).child('status').val() !== 'hidden' && (root.child('moderation').child(auth.uid).child('status').val() === 'visible' || !root.child('moderation').child(auth.uid).child('count').exists() || root.child('moderation').child(auth.uid).child('count').val() < 3)",
         ".validate": "newData.hasChildren(['sender','body','created'])",
         "sender": {
           ".validate": "newData.isString() && newData.val() === auth.uid"
         },
         "body": {
-          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300 && newData.val().matches(/(.|\\n)*[^ \\n\\r\\t](.|\\n)*/)"
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300 && newData.val().matches(/(.|\\n)*[^ \\n\\r\\t](.|\\n)*/) && !newData.val().matches(/(.|\\n)*(死ね|くたばれ|クタバレ|殺すぞ|ころすぞ|コロスゾ|くそ野郎|クソ野郎|くそやろう|クソヤロウ|糞野郎|きちがい|キチガイ)(.|\\n)*/) && !newData.val().matches(/^[しシ][ねネ][!！。…]*$/)"
         },
         "created": {
           ".validate": "newData.isNumber() && newData.val() === now"
@@ -46,7 +46,7 @@
     "limits": {
       "$uid": {
         ".write": "auth != null && auth.uid === $uid && newData.exists()",
-        ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || data.val() <= now - 3000)"
+        ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || data.val() <= now - 1000)"
       }
     },
     "reactions": {
@@ -62,7 +62,7 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid && newData.exists()",
-        ".validate": "newData.hasChildren(['windowStart','count','lastAt','lastBody','messageId']) && (!data.exists() || data.child('lastAt').val() <= now - 3000) && (!data.exists() || data.child('lastAt').val() <= now - 60000 || data.child('lastBody').val() !== newData.child('lastBody').val()) && ((!data.exists() || data.child('windowStart').val() <= now - 60000) ? (newData.child('windowStart').val() === now && newData.child('count').val() === 1) : (newData.child('windowStart').val() === data.child('windowStart').val() && newData.child('count').val() === data.child('count').val() + 1 && newData.child('count').val() <= 6))",
+        ".validate": "newData.hasChildren(['windowStart','count','lastAt','lastBody','messageId']) && (!data.exists() || data.child('lastAt').val() <= now - 1000) && (!data.exists() || data.child('lastAt').val() <= now - 15000 || data.child('lastBody').val() !== newData.child('lastBody').val()) && ((!data.exists() || data.child('windowStart').val() <= now - 60000) ? (newData.child('windowStart').val() === now && newData.child('count').val() === 1) : (newData.child('windowStart').val() === data.child('windowStart').val() && newData.child('count').val() === data.child('count').val() + 1 && newData.child('count').val() <= 12))",
         "windowStart": {
           ".validate": "newData.isNumber()"
         },
@@ -80,6 +80,39 @@
         },
         "$other": {
           ".validate": false
+        }
+      }
+    },
+    "moderation": {
+      ".read": "auth != null",
+      "$target": {
+        "count": {
+          ".write": "auth != null && auth.uid !== $target && !root.child('reports').child($target).child(auth.uid).exists() && newData.parent().parent().parent().child('reports').child($target).child(auth.uid).exists() && newData.exists()",
+          ".validate": "newData.isNumber() && newData.val() === (data.exists() ? data.val() + 1 : 1)"
+        },
+        "status": {
+          ".write": false
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "reports": {
+      "$target": {
+        "$reporter": {
+          ".read": "auth != null && auth.uid === $reporter",
+          ".write": "auth != null && auth.uid === $reporter && auth.uid !== $target && !data.exists() && newData.exists()",
+          ".validate": "newData.hasChildren(['messageId','created']) && root.child('chat').child(newData.child('messageId').val()).child('sender').val() === $target && root.child('chat').child(newData.child('messageId').val()).child('created').val() >= now - 86400000 && newData.parent().parent().parent().child('moderation').child($target).child('count').val() === (root.child('moderation').child($target).child('count').exists() ? root.child('moderation').child($target).child('count').val() + 1 : 1)",
+          "messageId": {
+            ".validate": "newData.isString()"
+          },
+          "created": {
+            ".validate": "newData.isNumber() && newData.val() === now"
+          },
+          "$other": {
+            ".validate": false
+          }
         }
       }
     }

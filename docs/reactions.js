@@ -1,7 +1,9 @@
 export const POSITIVE_REACTIONS=[['🫶','応援してるよ'],['💛','共感したよ'],['🌷','おつかれさま'],['👏','がんばったね'],['✨','すてきだね'],['🥰','ありがとう']];
-export function createReactions({api,db,uid,onChange,isConnected}){
+export function createReactions({api,db,uid,onChange,isConnected,onReport}){
   const values=new Map(),subscriptions=new Map();let selected=null,pending=false,problem='',revision=0;
   const changed=()=>{revision++;onChange();};
+  document.addEventListener('click',event=>{if(selected&&!event.target.closest('.bubble')){selected=null;changed();}});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&selected){selected=null;changed();}});
   function sync(messages){
     const ids=new Set(messages.map(m=>m.id).filter(Boolean));
     for(const [id,stop] of subscriptions){if(!ids.has(id)){stop();subscriptions.delete(id);values.delete(id);}}
@@ -31,7 +33,7 @@ export function createReactions({api,db,uid,onChange,isConnected}){
     const summary=document.createElement('div');summary.className='reaction-summary';
     for(const [emoji,label] of POSITIVE_REACTIONS){
       const count=Object.values(reactions).filter(r=>r===emoji).length;if(!count)continue;
-      const item=document.createElement(other?'button':'span');item.className='reaction-total';item.textContent=emoji+' '+count;
+      const item=document.createElement(other?'button':'span');item.className='reaction-total';item.textContent=emoji+(count>1?' '+count:'');
       item.setAttribute('aria-label',label+' '+count+'件');
       if(other){item.type='button';item.dataset.focusKey=id+emoji+'-count';item.setAttribute('aria-pressed',String(reactions[uid]===emoji));item.disabled=pending||!isConnected();item.onclick=()=>{void react(id,emoji);};}
       summary.append(item);
@@ -43,9 +45,11 @@ export function createReactions({api,db,uid,onChange,isConnected}){
       for(const [emoji,label] of POSITIVE_REACTIONS){
         const button=document.createElement('button');button.type='button';button.textContent=emoji;button.title=label;button.setAttribute('aria-label',label);button.setAttribute('aria-pressed',String(reactions[uid]===emoji));button.dataset.focusKey=id+emoji;button.disabled=pending||!isConnected();button.onclick=()=>{void react(id,emoji);};picker.append(button);
       }
-      const hint=document.createElement('small');hint.textContent='ひとつ選んで、気持ちを届けよう。同じ絵文字で取り消し。';
-      const close=document.createElement('button');close.type='button';close.className='reaction-close';close.textContent='閉じる';close.onclick=()=>{selected=null;changed();};
-      el.append(picker,hint,close);
+
+      const close=document.createElement('button');close.type='button';close.className='reaction-close';close.textContent='×';close.setAttribute('aria-label','リアクションを閉じる');close.onclick=()=>{selected=null;changed();};
+      picker.append(close);
+      if(onReport){const report=document.createElement('button');report.type='button';report.className='report-message';report.textContent='報告';report.onclick=()=>{selected=null;changed();void onReport(message);};picker.append(report);}
+      el.append(picker);
       if(problem){const error=document.createElement('p');error.className='reaction-error';error.setAttribute('role','status');error.textContent=problem;el.append(error);}
     }
   }
