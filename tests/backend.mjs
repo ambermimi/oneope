@@ -1,0 +1,43 @@
+// Explicit integration test against Tomori's dedicated backend; cleans up its fixtures.
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {firebaseConfig as config} from '../docs/firebase-config.js';
+assert.equal(process.env.TOMORI_TEST_PROJECT,config.projectId,'Set TOMORI_TEST_PROJECT to authorize integration fixtures.');
+const authURL='https://identitytoolkit.googleapis.com/v1/accounts:';
+async function auth(action,body){const r=await fetch(authURL+action+'?key='+config.apiKey,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});assert.equal(r.status,200,action);return r.json();}
+const users=[];const keys=[];let passed=0;
+const timestamp={'.sv':'timestamp'};
+async function call(path,method,body,token,query=''){
+ const url=new URL(config.databaseURL+'/'+path+'.json');if(token)url.searchParams.set('auth',token);
+ for(const [k,v] of new URLSearchParams(query))url.searchParams.set(k,v);
+ return fetch(url,{method,headers:{'Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)});
+}
+function check(r,status,label){assert.equal(r.status,status,label);console.log('PASS',label);passed++;}
+try{
+ const a=await auth('signUp',{returnSecureToken:true});users.push(a);
+ const b=await auth('signUp',{returnSecureToken:true});users.push(b);
+ check(await call('presence','GET'),401,'anonymous HTTP reader denied');
+ check(await call('presence/'+a.localId,'PUT',{status:'眠れない',seen:timestamp},a.idToken),200,'own presence accepted');
+ check(await call('presence/'+a.localId,'PUT',{status:'疲れたよ',seen:timestamp},b.idToken),401,'another user cannot alter presence');
+ check(await call('presence/'+a.localId,'PUT',{status:'invalid',seen:timestamp},a.idToken),401,'invalid status denied');
+ const key='test-'+crypto.randomUUID();keys.push(key);
+ const payload={['chat/'+key]:{sender:a.localId,body:'接続テスト\nverification',created:timestamp},['limits/'+a.localId]:timestamp};
+ check(await call('','PATCH',payload,a.idToken),200,'valid multiline message accepted');
+ check(await call('chat/'+key,'PATCH',{body:'edited'},a.idToken),401,'message editing denied');
+ const bad='test-'+crypto.randomUUID();keys.push(bad);
+ check(await call('','PATCH',{['chat/'+bad]:{sender:b.localId,body:'x'.repeat(301),created:timestamp},['limits/'+b.localId]:timestamp},b.idToken),401,'oversized message denied');
+ check(await call('','PATCH',{['chat/'+bad]:{sender:a.localId,body:'spoof',created:timestamp},['limits/'+b.localId]:timestamp},b.idToken),401,'sender spoofing denied');
+ check(await call('chat','GET',undefined,b.idToken),401,'unbounded chat read denied');
+ const q=new URLSearchParams({orderBy:'"created"',startAt:String(Math.floor(Date.now()/3600000)*3600000-82800000),limitToLast:'100'});
+ const shared=await call('chat','GET',undefined,b.idToken,q.toString());check(shared,200,'bounded chat read accepted');assert.equal((await shared.json())[key].body,payload['chat/'+key].body);
+ const rateKey='test-'+crypto.randomUUID();keys.push(rateKey);
+ const p={['chat/'+bad]:{sender:b.localId,body:'first',created:timestamp},['limits/'+b.localId]:timestamp};
+ check(await call('','PATCH',p,b.idToken),200,'second user can send');
+ check(await call('','PATCH',{['chat/'+rateKey]:{sender:b.localId,body:'too fast',created:timestamp},['limits/'+b.localId]:timestamp},b.idToken),401,'rapid repeat message denied');
+ console.log(passed+' checks passed');
+}catch(e){console.error(e.message);process.exitCode=1;}finally{
+ const cleanup=Object.fromEntries([...keys.map(k=>['chat/'+k,null]),...users.flatMap(u=>[['presence/'+u.localId,null],['limits/'+u.localId,null]])]);
+ execFileSync('firebase',['database:update','/','--data',JSON.stringify(cleanup),'--force','--project',config.projectId],{stdio:'pipe'});
+ for(const u of users)await auth('delete',{idToken:u.idToken});
+ console.log('Test messages, presence and anonymous test accounts removed.');
+}

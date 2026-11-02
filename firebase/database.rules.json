@@ -1,0 +1,50 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "presence": {
+      ".read": "auth != null",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['status','seen'])",
+        "status": {
+          ".validate": "newData.isString() && (newData.val() === '\u6388\u4e73\u4e2d' || newData.val() === '\u591c\u6ce3\u304d\u4e2d' || newData.val() === '\u5bdd\u304b\u3057\u3064\u3051\u4e2d' || newData.val() === '\u7720\u308c\u306a\u3044' || newData.val() === '\u75b2\u308c\u305f\u3088')"
+        },
+        "seen": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "chat": {
+      ".read": "auth != null && query.orderByChild === 'created' && query.startAt === (now - now % 3600000 - 82800000) && query.limitToLast > 0 && query.limitToLast <= 100",
+      ".indexOn": [
+        "created"
+      ],
+      "$message": {
+        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('sender').val() === auth.uid && (!root.child('limits').child(auth.uid).exists() || root.child('limits').child(auth.uid).val() <= now - 3000) && newData.parent().parent().child('limits').child(auth.uid).val() === now",
+        ".validate": "newData.hasChildren(['sender','body','created'])",
+        "sender": {
+          ".validate": "newData.isString() && newData.val() === auth.uid"
+        },
+        "body": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 300 && newData.val().matches(/(.|\\n)*[^ \\n\\r\\t](.|\\n)*/)"
+        },
+        "created": {
+          ".validate": "newData.isNumber() && newData.val() === now"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "limits": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && newData.exists()",
+        ".validate": "newData.isNumber() && newData.val() === now && (!data.exists() || data.val() <= now - 3000)"
+      }
+    }
+  }
+}
