@@ -25,5 +25,5 @@ export function setupSky(){
   sky.innerHTML=markup;scene.prepend(sky);
   const note=document.createElement('div');note.className='sky-note';scene.after(note);
   function update(){const state=skyState();scene.style.setProperty('--daylight',state.daylight.toFixed(3));scene.style.setProperty('--dawn-glow',state.glow.toFixed(3));scene.style.setProperty('--star-opacity',state.stars.toFixed(3));note.textContent='東京の日の出 '+state.sunrise.toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'})+' · 日本で見える星座をモチーフに';}
-  update();setInterval(update,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)update();});
+  update();requestAnimationFrame(()=>requestAnimationFrame(()=>scene.classList.add('sky-ready')));setInterval(update,60000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)update();});
 }
