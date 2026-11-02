@@ -6,7 +6,7 @@ import {displayName,displayNameParts} from './names.js?v=20261102-room5';
 import {setupComposer} from './composer.js?v=20261102-room5';
 import {BOT_NAMES,botCount,botReplies} from './bots.js?v=20261102-room5';
 import {windows} from './scene.js?v=20261102-room5';
-import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-room5';
+import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
 const $=id=>document.getElementById(id);
 let joined=false,currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
