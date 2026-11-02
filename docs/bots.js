@@ -1,5 +1,5 @@
 // Local encouragement, varied by the random Firebase message ID and stable across redraws.
-export const BOT_NAMES=['ともり','こはる'];
+export const BOT_NAMES=['ともり'];
 const HOUR=3600000;
 export function nightStart(time){
   const jst=new Date(time+9*HOUR);
@@ -8,7 +8,7 @@ export function nightStart(time){
   const midnight=Date.UTC(jst.getUTCFullYear(),jst.getUTCMonth(),jst.getUTCDate())-9*HOUR;
   return midnight+(hour<5?-3:21)*HOUR;
 }
-export function botCount(time,humans){return nightStart(time)===null?0:humans>=5?2:1;}
+export function botCount(time){return nightStart(time)===null?0:1;}
 function hash(text){let n=0;for(const c of text)n=(n*31+c.codePointAt(0))>>>0;return n;}
 const sensitive=body=>/死にたい|消えたい|自傷|傷つけそう|殴りそう/.test(body);
 export function encouragement(body,seed=0){

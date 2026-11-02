@@ -5,7 +5,7 @@ assert.equal(botCount(t('2026-11-02T20:59:59'),0),0);
 assert.equal(botCount(t('2026-11-02T21:00:00'),0),1);
 assert.equal(botCount(t('2026-11-03T04:59:59'),4),1);
 assert.equal(botCount(t('2026-11-03T05:00:00'),50),0);
-assert.equal(botCount(t('2026-11-02T23:00:00'),5),2);
+assert.equal(botCount(t('2026-11-02T23:00:00'),5),1);
 const created=t('2026-11-02T21:00:00'),m={id:'a',sender:'person',body:'夜泣き中',created};
 assert.equal(botReplies([m],created+19999,1).length,0);
 assert.equal(botReplies([m],created+20000,1).length,1);
