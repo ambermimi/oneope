@@ -1,6 +1,6 @@
 import {IS_UAT} from './environment.js';
 // Local encouragement, varied by the random Firebase message ID and stable across redraws.
-export const BOT_NAMES=IS_UAT?['すずめ','うさぎ','こねこ','りす','こぐま']:['ともり'];
+export const BOT_NAMES=IS_UAT?['にっこりすずめ','ふわふわうさぎ','ねむねむこねこ','のんびりりす','ほっこりこぐま']:['ともり'];
 const previewStart=Date.now();
 const previewBodies=['授乳中のみんな、おつかれさま 🍼','なかなか寝ない夜もあるよね 🌙','ひと息ついて、水分もとってね ☕','ここでゆっくり過ごそうね 🌷','今日も十分頑張ってるよ 🫶'];
 const HOUR=3600000;

@@ -4,7 +4,7 @@ import {languageProblem,isHidden} from './moderation.js?v=20261102-room5';
 import {spamProblem,nextGuard} from './spam.js?v=20261102-room5';
 import {setupMusic} from './music.js?v=20261102-room5';
 import {createReactions} from './reactions.js?v=20261102-reactionspace1';
-import {displayName,displayNameParts} from './names.js?v=20261102-animals1';
+import {displayName,displayNameParts,nicknameCode,readNicknameCookie,nicknameCookie} from './names.js?v=20261102-remember1';
 import {setupComposer} from './composer.js?v=20261102-panel1';
 import {BOT_NAMES,botCount,botReplies,botLike,nextBotDelay} from './bots.js?v=20261102-onebot1';
 import {windows} from './scene.js?v=20261102-room5';
@@ -13,7 +13,9 @@ import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
 const $=id=>document.getElementById(id);
 if(IS_UAT){const banner=document.createElement('div');banner.textContent='UAT・テスト環境｜5体のテストボット表示中';banner.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:9999;text-align:center;background:#623c16;color:#fff;font:12px/24px sans-serif;pointer-events:none';document.body.append(banner);document.title='[UAT] '+document.title;}
 let currentStatus='眠れない',people={},messages=[],uid='',connected=false,ready=false,busy=false;
-let moderation={};
+let moderation={},nameCode=null;
+const nameRow=document.createElement('div');nameRow.style.cssText='font-size:12px;color:#b8c3d1;text-align:left;padding:8px 0';nameRow.innerHTML='<span id=nicknameLabel></span> <label style="display:inline-flex;align-items:center;gap:4px;min-height:32px"><input id=rememberNickname type=checkbox disabled>この名前を覚える</label><span id=nicknameStatus role=status style="display:block;font-size:10px">このブラウザにCookieで1年間保存。登録は不要です。</span>';document.querySelector('.chat-footer').before(nameRow);
+$('rememberNickname').onchange=()=>{const checked=$('rememberNickname').checked;try{document.cookie=nicknameCookie(nameCode,checked);if(checked&&readNicknameCookie(document.cookie)!==nameCode)throw Error('cookie blocked');$('nicknameStatus').textContent=checked?'このブラウザに名前を保存しました。チェックを外すと保存を解除できます。':'保存を解除しました。今のお名前はこの画面を閉じるまで使えます。';}catch{$('rememberNickname').checked=false;$('nicknameStatus').textContent='Cookieに保存できませんでした。ブラウザの設定を確認してください。';}};
 let db,api,myRef,disconnectHook,reactions,clockOffset=0;
 const now=()=>Date.now()+clockOffset;
 function error(text){$('chatError').textContent=text;}
@@ -52,7 +54,7 @@ function render(){
   $('botStatus').textContent='';
   $('join').textContent='みんなのチャットをのぞく';
   $('join').removeAttribute('aria-pressed');
-  $('hint').textContent='あなたは「'+displayName(uid)+'」。ここで、ひと息。';controls();
+  $('hint').textContent='あなたは「'+displayName(uid,nameCode)+'」。ここで、ひと息。';controls();
 }
 let lastMessageView='',botTimer;
 function renderMessages(){
@@ -69,7 +71,7 @@ function renderMessages(){
   const focusKey=document.activeElement?.dataset.focusKey,oldScroll=box.scrollTop;
   lastMessageView=signature;box.replaceChildren();
   if(!recent.length){const p=document.createElement('p');p.className='chat-empty';p.textContent=ready?'まだ、ひとことはありません。あなたの「起きてるよ」から、どうぞ。':'灯りをつなぐ準備をしています。';box.append(p);}
-  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?(IS_UAT?m.name+'（テストボット）':'応援係（自動）'):'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
+  recent.forEach(m=>{const el=document.createElement('div');el.className='bubble'+(m.bot?' bot-msg':m.sender===uid?' mine-msg':'');const label=document.createElement('small');label.className='message-meta';const name=document.createElement('span');if(!m.anonymous&&!m.bot&&m.sender!==uid){name.className='animal-name';for(const part of displayNameParts(m.sender,m.nickname)){const line=document.createElement('span');line.textContent=part;name.append(line);}}else name.textContent=m.anonymous?'だれかより':m.bot?(IS_UAT?m.name+'（テストボット）':'応援係（自動）'):'あなた';const stamp=document.createElement('time');stamp.dateTime=new Date(m.created).toISOString();el.title=new Date(m.created).toLocaleString('ja-JP',{timeZone:'Asia/Tokyo'})+'（日本時間）';stamp.textContent=new Date(m.created).toLocaleTimeString('ja-JP',{timeZone:'Asia/Tokyo',hour:'2-digit',minute:'2-digit'});label.append(name);stamp.className='message-time';if(m.bot)label.title=(m.replyTo===uid?'あなた':displayName(m.replyTo))+'への自動応援';const p=document.createElement('p');p.textContent=m.body;el.append(label,p,stamp);reactions?.decorate(el,m);box.append(el);});
   if(near)box.scrollTop=box.scrollHeight;else box.scrollTop=oldScroll;
   if(focusKey){const target=[...box.querySelectorAll('[data-focus-key]')].find(el=>el.dataset.focusKey===focusKey);target?.focus({preventScroll:true});}
 }
@@ -100,7 +102,7 @@ async function send(body,anonymous=false){
     const previous=(await api.get(api.ref(db,'sendGuards/'+uid))).val();
     const problem=spamProblem(text,previous,now());if(problem){error(problem);if(anonymous)$('toast').textContent=problem;return;}
     const key=api.push(api.ref(db,'chat')).key;
-    await api.update(api.ref(db),{['chat/'+key]:{sender:uid,body:text,created:api.serverTimestamp(),...(anonymous?{anonymous:true}:{})},['limits/'+uid]:api.serverTimestamp(),['sendGuards/'+uid]:nextGuard(previous,text,key,now(),api.serverTimestamp())});
+    await api.update(api.ref(db),{['chat/'+key]:{sender:uid,body:text,created:api.serverTimestamp(),...(anonymous?{anonymous:true}:{nickname:nameCode})},['limits/'+uid]:api.serverTimestamp(),['sendGuards/'+uid]:nextGuard(previous,text,key,now(),api.serverTimestamp())});
     if(!anonymous){$('chatText').value='';$('charCount').textContent='0 / 300';}
     $('chatForm').dispatchEvent(new Event('message-sent'));
     if(anonymous){$('toast').replaceChildren(document.createTextNode('匿名で「おつかれさま」を届けました。'),document.createElement('br'),document.createTextNode('おつかれさま。あなたも、今日一日よく頑張りました。'));}
@@ -129,7 +131,7 @@ async function start(){
     api=databaseApi;void setupVisits({initializeApp,authApi,api,config:firebaseConfig});const app=initializeApp(firebaseConfig),auth=authApi.getAuth(app);
     // Each tab has its own anonymous session, so closing one cannot remove another.
     await authApi.setPersistence(auth,authApi.inMemoryPersistence);
-    uid=(await authApi.signInAnonymously(auth)).user.uid;db=api.getDatabase(app);myRef=api.ref(db,'presence/'+uid);ready=true;
+    uid=(await authApi.signInAnonymously(auth)).user.uid;const saved=readNicknameCookie(document.cookie);nameCode=saved??nicknameCode(uid);$('nicknameLabel').textContent='あなた：'+displayName(uid,nameCode);$('rememberNickname').checked=saved!==null;$('rememberNickname').disabled=false;db=api.getDatabase(app);myRef=api.ref(db,'presence/'+uid);ready=true;
     reactions=createReactions({api,db,uid,onChange:renderMessages,isConnected:()=>ready&&connected,onReport:reportMessage,autoLike:m=>ready&&connected&&botLike(m,now())});
     api.onValue(api.ref(db,'moderation'),snap=>{moderation=snap.val()||{};renderMessages();},()=>error('投稿の確認状態を読み込めませんでした。再読み込みしてください。'));
     api.onValue(api.ref(db,'.info/serverTimeOffset'),snap=>{clockOffset=snap.val()||0;});
