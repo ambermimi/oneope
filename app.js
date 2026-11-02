@@ -5,7 +5,7 @@ import {setupMusic} from './music.js?v=20261102-room5';
 import {createReactions} from './reactions.js?v=20261102-reactionspace1';
 import {displayName,displayNameParts} from './names.js?v=20261102-animals1';
 import {setupComposer} from './composer.js?v=20261102-panel1';
-import {BOT_NAMES,botCount,botReplies,botLike,nextBotDelay} from './bots.js?v=20261102-delays20b';
+import {BOT_NAMES,botCount,botReplies,botLike,nextBotDelay} from './bots.js?v=20261102-quiet1';
 import {windows} from './scene.js?v=20261102-room5';
 import {OWN_WINDOW,OTHER_WINDOWS,poseForStatus} from './scene-model.js?v=20261102-necks1';
 import {firebaseConfig} from './firebase-config.js?v=20261102-room5';
@@ -56,7 +56,7 @@ let lastMessageView='',botTimer;
 function renderMessages(){
   const box=$('messages'),near=box.scrollHeight-box.scrollTop-box.clientHeight<65;
   const visibleMessages=messages.filter(m=>!isHidden(moderation[m.sender]));
-  const replies=ready&&connected?botReplies(visibleMessages.filter(m=>!m.anonymous),now(),humanCount()):[];
+  const replies=ready&&connected?botReplies(visibleMessages,now(),humanCount()):[];
   const recent=[...visibleMessages,...replies].filter(m=>m.created>now()-86400000).sort((a,b)=>a.created-b.created);
   clearTimeout(botTimer);
   const delay=ready&&connected?nextBotDelay(visibleMessages,now()):null;
