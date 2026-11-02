@@ -40,6 +40,8 @@ export function botReplies(messages,time,humans){
   const count=botCount(time,humans);if(!count)return [];
   return messages.filter(m=>eligible(m,time)&&m.created+20000<=time&&!conversationBusy(messages,m.created+20000))
     .slice().sort((a,b)=>a.created-b.created||a.sender.localeCompare(b.sender)||a.body.localeCompare(b.body))
+    // Keep only the latest encouragement in the conversation, even on large screens.
+    .slice(-1)
     .map(m=>{const seed=hash(m.id||m.sender+m.created+m.body),bot=seed%count;
       return {sender:'bot:'+bot,bot:true,name:BOT_NAMES[bot],body:encouragement(m.body,seed),created:m.created+20000,replyTo:m.sender};});
 }

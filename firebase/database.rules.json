@@ -145,6 +145,52 @@
           }
         }
       }
+    },
+    "topicSummaries": {
+      ".read": "auth != null && (root.child('operators').child(auth.uid).val() === true || (auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.email === root.child('operatorConfig').child('email').val()))",
+      "$batch": {
+        ".write": "(auth != null && (root.child('operators').child(auth.uid).val() === true || (auth.token.email_verified === true && auth.token.firebase.sign_in_provider === 'google.com' && auth.token.email === root.child('operatorConfig').child('email').val()))) && !data.exists() && newData.exists()",
+        ".validate": "newData.hasChildren(['version','total','topics'])",
+        "version": {
+          ".validate": "newData.val() === 1"
+        },
+        "total": {
+          ".validate": "newData.isNumber() && newData.val() > 0 && newData.val() % 1 === 0"
+        },
+        "topics": {
+          "sleep": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "feeding": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "development": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "rest": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "support": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "greetings": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "daily": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          "other": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0 && newData.val() <= newData.parent().parent().child('total').val()"
+          },
+          ".validate": "newData.hasChildren(['sleep', 'feeding', 'development', 'rest', 'support', 'greetings', 'daily', 'other'])",
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     }
   }
 }

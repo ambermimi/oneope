@@ -16,7 +16,7 @@ assert.equal(nextBotDelay([m],created),20000);
 assert.equal(nextBotDelay([m],created+20000),null);
 assert.equal(nextBotDelay([m],created+20000),null);
 const messages=[m,{...m,id:'b',sender:'second',created:created+1000}];
-assert.equal(botReplies(messages,created+21000,5).length,2);
+assert.equal(botReplies(messages,created+21000,5).length,1);
 assert.deepEqual(botReplies([...messages].reverse(),created+21000,5),botReplies(messages,created+21000,5));
 assert.equal(botReplies([{...m,anonymous:true},{...m,bot:true}],created+20000,1).length,0);
 assert.equal(botLike({...m,anonymous:true},created+20000),false);
@@ -49,3 +49,7 @@ const choices=Array.from({length:40},(_,i)=>botReplies([{...m,id:'random-message
 assert(new Set(choices).size>=3,'random message IDs vary short replies');
 assert.equal(botReplies([m],created+20000,1)[0].body,botReplies([m],created+30000,1)[0].body,'redraws retain the chosen reply');
 console.log('PASS busy conversations suppress replies without a backlog; new quiet posts resume and replies vary stably');
+
+const quietPosts=Array.from({length:30},(_,i)=>({...m,id:"quiet-"+i,created:created+i*180000}));
+assert.equal(botReplies(quietPosts,created+30*180000,5).length,1,"only one bot reply in the entire rendered conversation");
+assert.equal(botReplies(quietPosts,created+30*180000,5)[0].created,quietPosts.at(-1).created+20000);
