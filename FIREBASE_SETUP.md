@@ -17,7 +17,7 @@ Project: `tomori-oneope-20261102`. Anonymous Authentication, the Singapore Realt
 
 ## Enable GitHub Pages
 
-Repository owner: open **Settings → Pages → Build and deployment → Deploy from a branch**, select **main** and **/docs**, then save. The connected GitHub account has write permission but does not have the administrative permission required to enable Pages. Private repositories may require an eligible GitHub plan. Do not change visibility without the owner's decision.
+Repository owner: open **Settings → Pages → Build and deployment → Deploy from a branch**, select **main** and **/ (root)**, then save. The connected GitHub account has write permission but does not have the administrative permission required to enable Pages. Private repositories may require an eligible GitHub plan. Do not change visibility without the owner's decision.
 
 Expected URL after successful deployment: https://ambermimi.github.io/oneope/night/
 
@@ -41,3 +41,5 @@ Open http://localhost:4173/night/. Without Firebase configuration, the page clea
 ## Verification
 
 `TOMORI_TEST_PROJECT=tomori-oneope-20261102 node tests/backend.mjs` runs 12 live integration checks with disposable fixtures, then removes them. Requires Node.js 22+ and an authenticated Firebase CLI with project admin access. Syntax checks and live integration checks passed.
+
+The active Pages configuration publishes the repository root. The static files are mirrored there from `docs/`; keep both copies in sync when editing.

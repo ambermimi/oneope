@@ -4,7 +4,8 @@ A quiet Japanese night room for mothers: glowing apartment windows, live presenc
 
 ## Architecture
 
-- `docs/`: responsive static frontend, ready for GitHub Pages (`main` → `/docs`).
+- Root HTML/JS files: published by GitHub Pages (`main` → `/`).
+- `docs/`: matching source copy, also usable with Pages configured for `/docs`.
 - Firebase Anonymous Authentication and Realtime Database: live chat and disconnect-aware presence.
 - `firebase/database.rules.json`: deny-by-default access, owned presence, immutable messages, 300-character validation, and per-identity sending limits.
 - `tests/backend.mjs`: 12 integration checks with disposable fixtures.
